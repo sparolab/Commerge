@@ -9,7 +9,11 @@
     <img src="https://readme-typing-svg.demolab.com?background=0D1117&color=22C55E&font=Fira+Code&size=14&duration=4500&pause=1000&center=true&vCenter=true&width=520&height=24&lines=Only+carefully+selected+scan+is+sufficient+for+map+merging%21" alt="tagline"/>
   </p>
 </div>
-
 ______________________________________________________________________
+
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/cd2d40fb-3f59-4100-928e-accc576e31e1" width="640" controls muted></video>
+</div>
+
 > [!IMPORTANT]
 > **26.07.15** Code will be open!
