@@ -15,4 +15,4 @@
 </div>
 
 > [!IMPORTANT]
-> **26.07.15** Code will be open!
+> **26.07.15** Code will be released!
