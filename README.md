@@ -11,7 +11,7 @@
 </div>
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/cd2d40fb-3f59-4100-928e-accc576e31e1" width="640" controls muted></video>
+  <video src="https://github.com/user-attachments/assets/cd2d40fb-3f59-4100-928e-accc576e31e1" width="580" controls muted></video>
 </div>
 
 > [!IMPORTANT]
