@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Commerge</h1>
   <a href="https://arxiv.org/abs/2606.25386"><img src="https://img.shields.io/badge/arXiv-2606.25386-b31b1b?logo=arxiv&logoColor=white" alt="arXiv" /></a>
-  <a href="https://https://sparolab.github.io/research/commerge/"><img src="https://img.shields.io/badge/Project-Commerge-6f42c1" alt="Commerge" /></a>
+  <a href="https://sparolab.github.io/research/commerge/"><img src="https://img.shields.io/badge/Project-Commerge-6f42c1" alt="Commerge" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSD--3--Clause-green" alt="BSD 3-Clause License" /></a>
   <br />
   <br />
