@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Commerge</h1>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSD--2--Clause-green" alt="BSD 3-Clause License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSD--3--Clause-green" alt="BSD 3-Clause License" /></a>
   <a href="https://https://sparolab.github.io/research/commerge/"><img src="https://img.shields.io/badge/Project-Commerge-6f42c1" alt="Commerge" /></a>
   <br />
   <br />
