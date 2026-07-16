@@ -6,7 +6,7 @@
   <br />
   <br />
   <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?background=0D1117&color=22C55E&font=Fira+Code&size=14&duration=4500&pause=1000&center=true&vCenter=true&width=660&height=24&lines=Only+a+small+subset+of+carefully+selected+scans+is+sufficient+for+map+merging%21" alt="tagline"/>
+  <img src="https://readme-typing-svg.demolab.com?background=0D1117&color=22C55E&font=Fira+Code&size=14&duration=4500&pause=1000&center=true&vCenter=true&width=680&height=24&lines=Only+a+small+subset+of+carefully+selected+scans+is+sufficient+for+map+merging%21" alt="tagline"/>
   </p>
 </div>
 
