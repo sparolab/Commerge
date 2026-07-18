@@ -16,5 +16,5 @@
 </div>
 
 > [!IMPORTANT]
-> **26.07.15** Code will be released!   
-> **26.06.03** Commerge accepted in IJRR 2026!
+> **[26.07.15]** Code will be released!   
+> **[26.06.03]** Commerge accepted in IJRR 2026!
