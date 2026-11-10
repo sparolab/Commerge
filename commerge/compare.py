@@ -21,7 +21,9 @@ import numpy as np
 
 from .baselines.automerge import AutoMergeParams, automerge_select
 from .cli import descriptor
+from .merge import alignment_error, choose_regions, register
 from .selection import select
+from .submap import build_submap
 from .session import Session, read_kitti_poses
 from .solvers import SOLVERS
 
@@ -52,6 +54,8 @@ def parse_args(argv=None):
     p.add_argument("--gt-a", type=Path, help="ground-truth keyframe poses of A (KITTI, common frame)")
     p.add_argument("--gt-b", type=Path, help="ground-truth keyframe poses of B (same frame as --gt-a)")
     p.add_argument("--gt-radius", type=float, default=5.0)
+    p.add_argument("--policy", default="score", help="exchange policy of the Commerge variants (see commerge --help)")
+    p.add_argument("--no-register", action="store_true", help="skip registering each method's exchanged scans")
     return p.parse_args(argv)
 
 
@@ -65,9 +69,10 @@ def main(argv=None) -> int:
     A, B = Session.load(args.session_a, args.poses), Session.load(args.session_b, args.poses)
     aff = np.load(args.affinity) if args.affinity else \
         __import__("commerge").cosine_affinity(descriptor(A, args.descriptor), descriptor(B, args.descriptor))
-    gt = None
+    gt = gtT = None
     if args.gt_a and args.gt_b:
-        gt = (read_kitti_poses(args.gt_a)[:, :3, 3], read_kitti_poses(args.gt_b)[:, :3, 3])
+        gtT = (read_kitti_poses(args.gt_a), read_kitti_poses(args.gt_b))
+        gt = (gtT[0][:, :3, 3], gtT[1][:, :3, 3])
 
     rows, selections = [], {}
     quiet = lambda *a: None  # noqa: E731
@@ -82,23 +87,36 @@ def main(argv=None) -> int:
 
     total = len(A) + len(B)
     for name, (sel, sec) in selections.items():
-        ka, kb = sel.keyframes_a, sel.keyframes_b
+        # what is actually exchanged: the chosen region (AutoMerge keeps its best region already)
+        chosen = choose_regions(sel, aff, A.positions, B.positions, args.policy if name != "AutoMerge" else "all")
+        ka = sorted({a for k in chosen for a in sel.regions[k].keyframes_a})
+        kb = sorted({b for k in chosen for b in sel.regions[k].keyframes_b})
+        pairs = [p for k in chosen for p in sel.regions[k].pairs]
         row = {"method": name, "scans_a": len(ka), "scans_b": len(kb),
                "share": 100.0 * (len(ka) + len(kb)) / total,
                "megabytes": scan_megabytes(A, ka) + scan_megabytes(B, kb),
-               "pairs": len(sel.pairs), "seconds": sec}
-        if gt is not None and sel.pairs:
-            d = np.array([np.linalg.norm(gt[0][a] - gt[1][b]) for a, b in sel.pairs])
+               "pairs": len(pairs), "seconds": sec}
+        if gt is not None and pairs:
+            d = np.array([np.linalg.norm(gt[0][a] - gt[1][b]) for a, b in pairs])
             row["pair_precision"] = float((d <= args.gt_radius).mean())
+        if not args.no_register and ka and kb:
+            reg = register(build_submap(A, ka), build_submap(B, kb))
+            row["registered"] = reg is not None
+            if reg is not None and gtT is not None:
+                et, er, em = alignment_error(reg.T_a_b, A.poses, B.poses, *gtT)
+                row.update(trans_err=et, rot_err=er, merged_err=em)
         rows.append(row)
 
-    head = "| method | scans A + B | share of keyframes | data (MB) | pairs | pair precision | time (s) |"
-    print(head)
-    print("| --- | --- | --- | --- | --- | --- | --- |")
+    print("| method | scans A + B | share of keyframes | data (MB) | pairs | pair precision | merge error | time (s) |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for r in rows:
         prec = f"{100 * r['pair_precision']:.1f} %" if "pair_precision" in r else "-"
+        if "trans_err" in r:
+            err = f"{r['trans_err']:.2f} m, {r['rot_err']:.2f} deg"
+        else:
+            err = "failed" if r.get("registered") is False else "-"
         print(f"| {r['method']} | {r['scans_a']} + {r['scans_b']} | {r['share']:.1f} % | {r['megabytes']:.1f} | "
-              f"{r['pairs'] or '-'} | {prec} | {r['seconds']:.2f} |")
+              f"{r['pairs'] or '-'} | {prec} | {err} | {r['seconds']:.2f} |")
     (args.out / "comparison.json").write_text(json.dumps(rows, indent=1))
 
     from .viz import plot_comparison

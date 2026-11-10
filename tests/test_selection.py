@@ -60,3 +60,16 @@ def test_automerge_runs():
     aff, _, _ = scene()
     sel = automerge_select(aff, AutoMergeParams(min_area=60, ds=20, contrast_r=20), log=lambda *a: None)
     assert all(r.scans_a is not None for r in sel.regions)
+
+
+def test_exchange_policy():
+    from commerge import choose_regions
+    from commerge.merge import region_score
+
+    aff, pa, pb = scene()
+    sel = select(aff, pa, pb, 0.95, 60, solver="highs", log=lambda *a: None)
+    best = choose_regions(sel, aff, pa, pb, "score")
+    assert len(best) == 1
+    scores = [region_score(r, aff, pa, pb) for r in sel.regions]
+    assert scores[best[0]] == max(scores)
+    assert len(choose_regions(sel, aff, pa, pb, "all")) == sum(1 for r in sel.regions if r.pairs)

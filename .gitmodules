@@ -1,3 +1,6 @@
 [submodule "thirdparty/SOLiD"]
 	path = thirdparty/SOLiD
 	url = https://github.com/sparolab/SOLiD.git
+[submodule "thirdparty/KISS-Matcher"]
+	path = thirdparty/KISS-Matcher
+	url = https://github.com/MIT-SPARK/KISS-Matcher.git

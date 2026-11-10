@@ -22,5 +22,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install ".[compare]" pytest
-      - run: commerge --version && commerge-compare --help > /dev/null
+      - run: commerge --version && commerge-compare --help > /dev/null && python -c "import kiss_matcher, small_gicp"
       - run: pytest -q tests

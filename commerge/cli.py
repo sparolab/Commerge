@@ -18,7 +18,8 @@ import numpy as np
 
 from . import __version__
 from .selection import STEPS, cosine_affinity, select
-from .session import Session
+from .merge import POLICIES, alignment_error, choose_regions, register
+from .session import Session, read_kitti_poses
 from .solvers import SOLVERS
 from .submap import build_submap, save_submap
 
@@ -45,6 +46,15 @@ def parse_args(argv=None) -> argparse.Namespace:
     g.add_argument("--solver", choices=SOLVERS, default="auto",
                    help="gurobi (paper, needs a license) | highs (SciPy, no license) | auto (default)")
     g.add_argument("--time-limit", type=float, default=0.0, help="per-problem solver time limit, s (0: none)")
+    g = p.add_argument_group("exchange and merging")
+    g.add_argument("--policy", choices=POLICIES, default="score",
+                   help="region(s) whose scans are exchanged: score (largest step-(C) clique weight, default), "
+                        "area, candidates or all")
+    g.add_argument("--no-register", action="store_true",
+                   help="do not register the exchanged submaps (registration needs kiss-matcher, small-gicp)")
+    g.add_argument("--reg-voxel", type=float, default=0.5, help="registration voxel size (m)")
+    g.add_argument("--gt-a", type=Path, help="ground-truth keyframe poses of A (KITTI, common frame): report the error")
+    g.add_argument("--gt-b", type=Path, help="ground-truth keyframe poses of B (same frame as --gt-a)")
     g = p.add_argument_group("output")
     g.add_argument("--no-submaps", action="store_true", help="only write the selection")
     g.add_argument("--min-range", type=float, default=3.0, help="drop points closer than this (m)")
@@ -101,13 +111,33 @@ def main(argv=None) -> int:
                      "C_pairs": len(r.pairs), "keyframes_a": r.keyframes_a, "keyframes_b": r.keyframes_b,
                      "seconds": r.seconds} for r in sel.regions],
     }
-    if not args.no_submaps:
-        for k, r in enumerate(sel.regions):
-            if not r.pairs:
-                continue
-            pa = save_submap(out / f"submap_A_{k}.pcd", build_submap(A, r.keyframes_a, args.min_range, args.voxel))
-            pb = save_submap(out / f"submap_B_{k}.pcd", build_submap(B, r.keyframes_b, args.min_range, args.voxel))
-            summary["regions"][k]["submaps"] = [pa.name, pb.name]
+    # exchange policy: the region(s) whose selected scans the robots actually send
+    chosen = choose_regions(sel, aff, A.positions, B.positions, args.policy, args.consistency)
+    ka = sorted({a for k in chosen for a in sel.regions[k].keyframes_a})
+    kb = sorted({b for k in chosen for b in sel.regions[k].keyframes_b})
+    summary["exchange"] = {"policy": args.policy, "regions": chosen, "keyframes_a": ka, "keyframes_b": kb}
+    if ka and kb and not (args.no_submaps and args.no_register):
+        sub_a = build_submap(A, ka, args.min_range, args.voxel)
+        sub_b = build_submap(B, kb, args.min_range, args.voxel)
+        if not args.no_submaps:
+            save_submap(out / "submap_A.pcd", sub_a)
+            save_submap(out / "submap_B.pcd", sub_b)
+        if not args.no_register:
+            reg = register(sub_a, sub_b, args.reg_voxel)
+            if reg is None:
+                print("[commerge] registration failed (too few inliers); try another --policy")
+            else:
+                np.savetxt(out / "T_a_b.txt", reg.T_a_b, fmt="%.9f")
+                merged = np.einsum("ij,njk->nik", reg.T_a_b, B.poses)[:, :3, :4].reshape(len(B), 12)
+                np.savetxt(out / "poses_b_in_a.txt", merged, fmt="%.9f")
+                summary["registration"] = {"inliers": reg.inliers, "gicp_error": reg.fitness, "seconds": reg.seconds}
+                msg = f"[commerge] registered B to A: {reg.inliers} KISS-Matcher inliers, GICP in {reg.seconds:.1f} s"
+                if args.gt_a and args.gt_b:
+                    et, er, em = alignment_error(reg.T_a_b, A.poses, B.poses, read_kitti_poses(args.gt_a),
+                                                 read_kitti_poses(args.gt_b))
+                    summary["registration"]["error"] = {"trans_m": et, "rot_deg": er, "merged_mean_m": em}
+                    msg += f"; vs ground truth: {et:.2f} m, {er:.2f} deg (B keyframes {em:.2f} m off on average)"
+                print(msg)
     (out / "selection.json").write_text(json.dumps(summary, indent=1))
 
     if args.plot:
@@ -116,9 +146,11 @@ def main(argv=None) -> int:
         plot_selection(aff, sel, out / "selection.png", args.threshold)
 
     total = len(A) + len(B)
-    sent = len(sel.keyframes_a) + len(sel.keyframes_b)
-    print(f"[commerge] selected {len(sel.keyframes_a)} A + {len(sel.keyframes_b)} B scans "
-          f"({100.0 * sent / max(total, 1):.1f} % of {total}) in {len(sel.regions)} region(s) -> {out}")
+    sent = len(ka) + len(kb)
+    mb = sum(A.scans[k].stat().st_size for k in ka) / 1e6 + sum(B.scans[k].stat().st_size for k in kb) / 1e6 \
+        if A.scans and B.scans else float("nan")
+    print(f"[commerge] exchanged {len(ka)} A + {len(kb)} B scans ({100.0 * sent / max(total, 1):.1f} % of {total}, "
+          f"{mb:.1f} MB) from region(s) {chosen} of {len(sel.regions)} -> {out}")
     return 0
 
 
