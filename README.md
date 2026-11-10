@@ -121,7 +121,7 @@ ______________________________________________________________________
 
 ## :warning: Limitation: heterogeneous LiDARs
 
-Commerge selects scans from the affinity of the two robots' descriptors. With the same LiDAR on both robots, SOLiD gives an affinity whose overlapping regions stand out. With different LiDARs (a spinning Ouster and a Livox Avia with a 70° field of view, for instance), SOLiD describes the same place differently and step (A) finds hundreds of regions with no structure. A descriptor made for heterogeneous LiDARs, such as [InLiER](https://github.com/LTU-RAI/InLiER), passed with `--affinity` (and `--enhance`), brings the right region back; registering the few scans exchanged across such different fields of view is still unreliable (`--registration grid` is experimental). Contributions are welcome.
+Commerge selects scans from the affinity of the two robots' descriptors. With the same LiDAR on both robots, SOLiD gives an affinity whose overlapping regions stand out. With different LiDARs (a spinning Ouster and a Livox Avia with a 70° field of view, for instance), SOLiD describes the same place differently and step (A) finds hundreds of regions with no structure. A descriptor made for heterogeneous LiDARs, such as [HeLiOS](https://github.com/minwoo0611/HeLiOS) or [InLiER](https://github.com/LTU-RAI/InLiER), passed with `--affinity` (and `--enhance`), brings the right region back; registering the few scans exchanged across such different fields of view is still unreliable (`--registration grid` is experimental). Contributions are welcome.
 
 ______________________________________________________________________
 
