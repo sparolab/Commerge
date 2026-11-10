@@ -1,4 +1,4 @@
-# Package tests on Ubuntu and macOS (HiGHS; the Gurobi tests skip without a licence).
+# Package tests on Ubuntu and macOS (HiGHS; the Gurobi tests skip without a license).
 name: CI
 
 on:

@@ -1,4 +1,5 @@
-"""commerge-compare: Commerge (and its ablations) against AutoMerge on the same two sessions.
+"""commerge-compare: Commerge, its ablations (without step (B) or (C), step (A) only) and AutoMerge
+on the same two sessions.
 
     commerge-compare <session A> <session B> --threshold 0.96 --min-area 2000 --out cmp/
                      [--gt-a gt_a.txt --gt-b gt_b.txt]
@@ -6,7 +7,7 @@
 Reports, per method, the scans each robot sends (count, share of all keyframes, megabytes of the
 keyframe clouds) and the run time. With ground-truth keyframe poses in a common frame
 (KITTI format, one row per keyframe), it also reports the share of selected pairs that are
-really the same place (within --gt-radius metres).
+really the same place (within --gt-radius meters).
 """
 from __future__ import annotations
 
@@ -25,10 +26,10 @@ from .session import Session, read_kitti_poses
 from .solvers import SOLVERS
 
 METHODS = {
-    "Commerge": ("regions", "cover", "clique"),
-    "w/o cover": ("regions", "clique"),
-    "w/o clique": ("regions", "cover"),
-    "regions only": ("regions",),
+    "Commerge (A+B+C)": "ABC",
+    "w/o (B)": "AC",
+    "w/o (C)": "AB",
+    "(A) only": "A",
 }
 
 
@@ -70,10 +71,10 @@ def main(argv=None) -> int:
 
     rows, selections = [], {}
     quiet = lambda *a: None  # noqa: E731
-    for name, stages in METHODS.items():
+    for name, steps in METHODS.items():
         t = time.perf_counter()
         sel = select(aff, A.positions, B.positions, args.threshold, args.min_area, args.consistency,
-                     stages, args.solver, args.time_limit, log=quiet)
+                     steps, args.solver, args.time_limit, log=quiet)
         selections[name] = (sel, time.perf_counter() - t)
     t = time.perf_counter()
     am = AutoMergeParams(min_area=args.automerge_min_area or args.min_area)

@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from . import __version__
-from .selection import STAGES, cosine_affinity, select
+from .selection import STEPS, cosine_affinity, select
 from .session import Session
 from .solvers import SOLVERS
 from .submap import build_submap, save_submap
@@ -39,10 +39,11 @@ def parse_args(argv=None) -> argparse.Namespace:
     g.add_argument("--min-area", type=int, required=True, help="smallest region (cells of its bounding box)")
     g.add_argument("--consistency", type=float, default=3.0,
                    help="largest distance mismatch (m) between two consistent pairs (default: 3)")
-    g.add_argument("--stages", default=",".join(STAGES),
-                   help=f"comma-separated subset of {','.join(STAGES)} (default: all)")
+    g.add_argument("--steps", default="ABC",
+                   help="steps to run, any subset of ABC (default): (A) " + STEPS["A"] + ", (B) " + STEPS["B"]
+                   + ", (C) " + STEPS["C"])
     g.add_argument("--solver", choices=SOLVERS, default="auto",
-                   help="gurobi (paper, needs a licence) | highs (SciPy, no licence) | auto (default)")
+                   help="gurobi (paper, needs a license) | highs (SciPy, no license) | auto (default)")
     g.add_argument("--time-limit", type=float, default=0.0, help="per-problem solver time limit, s (0: none)")
     g = p.add_argument_group("output")
     g.add_argument("--no-submaps", action="store_true", help="only write the selection")
@@ -66,7 +67,6 @@ def descriptor(s: Session, which: str) -> np.ndarray:
 
 def main(argv=None) -> int:
     args = parse_args(argv)
-    stages = [s.strip() for s in args.stages.split(",") if s.strip()]
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
 
@@ -82,7 +82,7 @@ def main(argv=None) -> int:
         np.save(out / "affinity.npy", aff.astype(np.float32))
 
     sel = select(aff, A.positions, B.positions, args.threshold, args.min_area, args.consistency,
-                 stages, args.solver, args.time_limit, args.verbose)
+                 args.steps, args.solver, args.time_limit, args.verbose)
 
     with open(out / "pairs.csv", "w", newline="") as f:
         w = csv.writer(f)
@@ -94,11 +94,11 @@ def main(argv=None) -> int:
     summary = {
         "session_a": str(args.session_a), "session_b": str(args.session_b),
         "keyframes": [len(A), len(B)], "threshold": args.threshold, "min_area": args.min_area,
-        "consistency": args.consistency, "stages": list(sel.stages), "solver": sel.solver,
+        "consistency": args.consistency, "steps": sel.steps, "solver": sel.solver,
         "selected_scans": [len(sel.keyframes_a), len(sel.keyframes_b)],
         "regions": [{"box_a": [r.box[0], r.box[1]], "box_b": [r.box[2], r.box[3]],
-                     "candidates": r.candidates, "cover": [len(r.cover_a), len(r.cover_b)],
-                     "pairs": len(r.pairs), "keyframes_a": r.keyframes_a, "keyframes_b": r.keyframes_b,
+                     "A_candidates": r.candidates, "B_cover": [len(r.cover_a), len(r.cover_b)],
+                     "C_pairs": len(r.pairs), "keyframes_a": r.keyframes_a, "keyframes_b": r.keyframes_b,
                      "seconds": r.seconds} for r in sel.regions],
     }
     if not args.no_submaps:

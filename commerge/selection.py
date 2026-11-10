@@ -1,28 +1,29 @@
 """Commerge scan selection: which keyframes two robots should exchange to merge their maps.
 
-1. ``regions`` - sequential matching: connected regions of the affinity matrix above ``threshold``
-   whose bounding box covers at least ``min_area`` cells (places the robots visited in sequence).
-2. ``cover``   - per region, the minimum vertex cover of the bipartite graph of candidate pairs
-   (robot A keyframes x robot B keyframes): the fewest keyframes that still touch every pair.
-3. ``clique``  - among the pairs between covered keyframes, the maximum edge-weight clique of the
-   pairwise-consistency graph: pairs (i, j), (k, l) agree when the distance between A's
-   keyframes i, k matches the distance between B's keyframes j, l.
+Step (A) sequential matching: connected regions of the affinity matrix above ``threshold`` whose
+         bounding box covers at least ``min_area`` cells (places both robots visited in sequence).
+Step (B) balanced minimum vertex cover: per region, the fewest keyframes that still touch every
+         candidate pair of the bipartite graph (robot A keyframes x robot B keyframes), with both
+         robots keeping at least half of the smaller side.
+Step (C) maximum edge-weighted clique: among the pairs between covered keyframes, the largest set
+         of mutually consistent pairs: pairs (i, j), (k, l) agree when the distance between A's
+         keyframes i, k matches the distance between B's keyframes j, l.
 
-Each stage can be switched off (ablation): without ``regions`` the whole matrix is one region,
-without ``cover`` every candidate pair goes on, without ``clique`` every remaining pair is kept.
+Each step can be switched off (ablation, ``steps``): without (A) the whole matrix is one region,
+without (B) every candidate pair goes on, without (C) every covered pair is kept.
 """
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import List, Sequence, Tuple
+from typing import List, Tuple
 
 import numpy as np
 from scipy.ndimage import find_objects, label
 
 from . import solvers
 
-STAGES = ("regions", "cover", "clique")
+STEPS = {"A": "sequential matching", "B": "balanced minimum vertex cover", "C": "maximum edge-weighted clique"}
 
 
 def cosine_affinity(desc_a: np.ndarray, desc_b: np.ndarray) -> np.ndarray:
@@ -87,7 +88,7 @@ class Region:
 @dataclass
 class Selection:
     regions: List[Region]
-    stages: Tuple[str, ...]
+    steps: str
     solver: str
 
     @property
@@ -104,26 +105,27 @@ class Selection:
 
 
 def select(affinity: np.ndarray, pos_a: np.ndarray, pos_b: np.ndarray, threshold: float,
-           min_area: int, consistency: float = 3.0, stages: Sequence[str] = STAGES,
+           min_area: int, consistency: float = 3.0, steps: str = "ABC",
            solver: str = "auto", time_limit: float = 0.0, verbose: bool = False,
            tie_break: bool = True, log=print) -> Selection:
-    """Run the selected stages on an (Na, Nb) affinity matrix; ``pos_a``/``pos_b`` are the
-    keyframe positions (Na, 3), (Nb, 3) of each robot in its own frame."""
-    unknown = set(stages) - set(STAGES)
+    """Run steps (A), (B), (C) (any subset, e.g. ``steps="AC"``) on an (Na, Nb) affinity matrix;
+    ``pos_a``/``pos_b`` are the keyframe positions (Na, 3), (Nb, 3) of each robot in its own frame."""
+    steps = steps.upper().replace(",", "").replace(" ", "")
+    unknown = set(steps) - set(STEPS)
     if unknown:
-        raise ValueError(f"unknown stages {sorted(unknown)}; choose from {STAGES}")
-    stages = tuple(s for s in STAGES if s in stages)
-    if "cover" in stages or "clique" in stages:
+        raise ValueError(f"unknown steps {sorted(unknown)}; choose from A, B, C")
+    steps = "".join(s for s in STEPS if s in steps)
+    if "B" in steps or "C" in steps:
         solver = solvers.resolve(solver)
     na, nb = affinity.shape
     if len(pos_a) < na or len(pos_b) < nb:
         raise ValueError(f"affinity {affinity.shape} but {len(pos_a)} / {len(pos_b)} poses")
 
     t0 = time.perf_counter()
-    boxes = extract_regions(affinity, threshold, min_area) if "regions" in stages else [(0, na, 0, nb)]
+    boxes = extract_regions(affinity, threshold, min_area) if "A" in steps else [(0, na, 0, nb)]
     t_regions = time.perf_counter() - t0
-    log(f"[commerge] {len(boxes)} region(s) (threshold {threshold}, min area {min_area}) "
-        f"in {t_regions:.3f} s; stages {'+'.join(stages) or 'none'}, solver {solver}")
+    log(f"[commerge] steps {'+'.join(f'({s})' for s in steps) or 'none'}, solver {solver}: "
+        f"(A) {len(boxes)} region(s) (threshold {threshold}, min area {min_area}) in {t_regions:.3f} s")
 
     regions = []
     for k, (a0, a1, b0, b1) in enumerate(boxes):
@@ -136,8 +138,8 @@ def select(affinity: np.ndarray, pos_a: np.ndarray, pos_b: np.ndarray, threshold
             regions.append(r)
             continue
 
-        # 2. minimum vertex cover of the bipartite candidate graph
-        if "cover" in stages:
+        # step (B): balanced minimum vertex cover of the bipartite candidate graph
+        if "B" in steps:
             t = time.perf_counter()
             a_nodes = [("A", int(a)) for a in np.unique(pairs[:, 0])]
             b_nodes = [("B", int(b)) for b in np.unique(pairs[:, 1])]
@@ -159,24 +161,24 @@ def select(affinity: np.ndarray, pos_a: np.ndarray, pos_b: np.ndarray, threshold
             r.cover_b = sorted(i for s, i in cover if s == "B")
             keep = np.isin(pairs[:, 0], r.cover_a) & np.isin(pairs[:, 1], r.cover_b)
             pairs = pairs[keep]
-            r.seconds["cover"] = time.perf_counter() - t
+            r.seconds["B"] = time.perf_counter() - t
         else:
             r.cover_a = sorted(set(pairs[:, 0].tolist()))
             r.cover_b = sorted(set(pairs[:, 1].tolist()))
 
-        # 3. maximum edge-weight clique of the consistency graph
-        if "clique" in stages and len(pairs) > 1:
+        # step (C): maximum edge-weighted clique of the consistency graph
+        if "C" in steps and len(pairs) > 1:
             t = time.perf_counter()
             w = affinity[pairs[:, 0], pairs[:, 1]]
             M = consistency_scores(pairs, w, pos_a, pos_b, consistency)
             chosen = solvers.max_edge_weight_clique(M, solver=solver, time_limit=time_limit, verbose=verbose)
             pairs = pairs[chosen]
-            r.seconds["clique"] = time.perf_counter() - t
+            r.seconds["C"] = time.perf_counter() - t
 
         r.pairs = [(int(a), int(b)) for a, b in pairs]
-        log(f"[commerge] region {k}: A {a0}-{a1 - 1} x B {b0}-{b1 - 1}: {r.candidates} candidate pairs"
-            f" -> cover {len(r.cover_a)}+{len(r.cover_b)} keyframes -> {len(r.pairs)} pairs "
-            f"({len(r.keyframes_a)} A + {len(r.keyframes_b)} B scans)"
-            + "".join(f", {s} {v:.2f} s" for s, v in r.seconds.items()))
+        log(f"[commerge] region {k}: A {a0}-{a1 - 1} x B {b0}-{b1 - 1}: (A) {r.candidates} candidate pairs"
+            f" -> (B) {len(r.cover_a)}+{len(r.cover_b)} keyframes -> (C) {len(r.pairs)} pairs "
+            f"= {len(r.keyframes_a)} A + {len(r.keyframes_b)} B scans"
+            + "".join(f", ({s}) {v:.2f} s" for s, v in r.seconds.items()))
         regions.append(r)
-    return Selection(regions, stages, solver)
+    return Selection(regions, steps, solver)

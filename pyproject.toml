@@ -13,7 +13,7 @@ authors = [{ name = "Hogyun Kim", email = "hg.kim@inha.edu" }]
 dependencies = ["numpy", "scipy>=1.9", "matplotlib"]
 
 [project.optional-dependencies]
-gurobi = ["gurobipy"]          # the paper's solver; needs a Gurobi licence
+gurobi = ["gurobipy"]          # the paper's solver; needs a Gurobi license
 solid = ["solid-descriptor"]   # SOLiD descriptors in Python
 compare = ["scikit-learn"]     # K-means of the AutoMerge baseline (SciPy fallback otherwise)
 

@@ -1,5 +1,5 @@
 """Synthetic check: robot B drives part of robot A's route again; Commerge must find that overlap,
-send few scans and keep only consistent pairs. Runs with HiGHS (no licence); with Gurobi when present."""
+send few scans and keep only consistent pairs. Runs with HiGHS (no license); with Gurobi when present."""
 import numpy as np
 import pytest
 
@@ -38,17 +38,17 @@ def test_pipeline(solver):
     assert np.all(M[np.triu_indices(len(p), 1)] > 0)
 
 
-def test_stages_shrink():
+def test_steps_shrink():
     aff, pa, pb = scene()
     n = {}
-    for stages in [("regions",), ("regions", "cover"), ("regions", "cover", "clique")]:
-        sel = select(aff, pa, pb, 0.95, 60, stages=stages, solver="highs", log=lambda *a: None)
-        n[stages] = len(sel.pairs)
+    for steps in ("A", "AB", "ABC"):
+        sel = select(aff, pa, pb, 0.95, 60, steps=steps, solver="highs", log=lambda *a: None)
+        n[steps] = len(sel.pairs)
     a, b, c = n.values()
     assert a >= b >= c > 0
 
 
-@pytest.mark.skipif(not _gurobi_available(), reason="no Gurobi licence")
+@pytest.mark.skipif(not _gurobi_available(), reason="no Gurobi license")
 def test_gurobi_equals_highs():
     aff, pa, pb = scene(1)
     g = select(aff, pa, pb, 0.95, 60, solver="gurobi", log=lambda *a: None)

@@ -25,7 +25,7 @@ def plot_selection(affinity: np.ndarray, selection, path: Path, threshold: float
     ax.set_xlabel("robot B keyframe")
     ax.set_ylabel("robot A keyframe")
     ax.set_title(f"{len(selection.keyframes_a)} + {len(selection.keyframes_b)} scans selected "
-                 f"({'+'.join(selection.stages) or 'no stage'})")
+                 f"(steps {'+'.join(f'({s})' for s in selection.steps) or 'none'})")
     fig.colorbar(im, ax=ax, fraction=0.04, label="affinity")
     fig.tight_layout()
     fig.savefig(path, dpi=150)

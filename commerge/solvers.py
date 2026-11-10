@@ -1,7 +1,7 @@
-"""The two optimisation problems of Commerge, each with two back-ends:
+"""The two optimization problems of Commerge, each with two back-ends:
 
-* ``gurobi`` - the formulation of the paper (needs ``gurobipy`` and a Gurobi licence);
-* ``highs``  - the same problems as mixed-integer linear programs for SciPy's HiGHS (no licence).
+* ``gurobi`` - the formulation of the paper (needs ``gurobipy`` and a Gurobi license);
+* ``highs``  - the same problems as mixed-integer linear programs for SciPy's HiGHS (no license).
 
 ``auto`` uses Gurobi when it is installed and licensed, HiGHS otherwise.
 """
@@ -15,7 +15,7 @@ SOLVERS = ("auto", "gurobi", "highs")
 
 
 def _env(verbose: bool = False):
-    """A Gurobi environment that prints nothing (not even the licence banner) unless verbose."""
+    """A Gurobi environment that prints nothing (not even the license banner) unless verbose."""
     import gurobipy as gp
 
     env = gp.Env(empty=True)
@@ -111,7 +111,7 @@ def max_edge_weight_clique(M: np.ndarray, solver: str = "auto", time_limit: floa
     """Largest-weight set of mutually consistent candidate pairs.
 
     ``M`` is the pair-score matrix (only its strict upper triangle is used; 0 = inconsistent).
-    maximise sum_{i<j} M_ij x_i x_j  s.t.  x_i + x_j <= 1 wherever M_ij = 0.
+    maximize sum_{i<j} M_ij x_i x_j  s.t.  x_i + x_j <= 1 wherever M_ij = 0.
     """
     n = len(M)
     if n <= 1:
@@ -138,7 +138,7 @@ def max_edge_weight_clique(M: np.ndarray, solver: str = "auto", time_limit: floa
                 return []
             return [i for i in range(n) if x[i].X > 0.5]
 
-    # Linearised for HiGHS: y_ij <= x_i, y_ij <= x_j for each weighted pair (y_ij = x_i x_j at
+    # Linearized for HiGHS: y_ij <= x_i, y_ij <= x_j for each weighted pair (y_ij = x_i x_j at
     # the optimum since M_ij > 0), x_i + x_j <= 1 for each inconsistent pair.
     from scipy.optimize import Bounds, LinearConstraint, milp
     from scipy.sparse import coo_matrix
@@ -146,7 +146,7 @@ def max_edge_weight_clique(M: np.ndarray, solver: str = "auto", time_limit: floa
     E = np.argwhere(U > 0)
     Z = np.argwhere(np.triu(U == 0, 1))
     m = len(E)
-    c = np.r_[np.zeros(n), -U[E[:, 0], E[:, 1]]]  # variables: x (n), then y (m); minimise -score
+    c = np.r_[np.zeros(n), -U[E[:, 0], E[:, 1]]]  # variables: x (n), then y (m); minimize -score
     k = np.arange(m)
     rows = np.r_[2 * k, 2 * k, 2 * k + 1, 2 * k + 1, 2 * m + np.repeat(np.arange(len(Z)), 2)]
     cols = np.r_[n + k, E[:, 0], n + k, E[:, 1], Z.ravel()]

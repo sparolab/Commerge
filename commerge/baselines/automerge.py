@@ -154,4 +154,4 @@ def automerge_select(affinity: np.ndarray, p: AutoMergeParams = AutoMergeParams(
         out.append(r)
     log(f"[automerge] {len(out)} region(s), {sum(len(r.keyframes_a) + len(r.keyframes_b) for r in out)} scans "
         f"in {time.perf_counter() - t:.2f} s")
-    return Selection(out, ("automerge",), "-")
+    return Selection(out, "", "-")
