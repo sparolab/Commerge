@@ -12,7 +12,6 @@
   <a href="#installation"><img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" /></a>
   <a href="#installation"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" /></a>
   <a href="#docker"><img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" /></a>
-  <a href="https://github.com/sparolab/Commerge/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD--3--Clause-green" /></a>
   <a href="https://github.com/sparolab/Commerge/actions/workflows/ci.yml"><img src="https://github.com/sparolab/Commerge/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
   <a href="https://sparolab.github.io/research/commerge/"><img src="https://img.shields.io/badge/Project-Page-6f42c1" /></a>
   <a href="https://arxiv.org/abs/2606.25386"><img src="https://img.shields.io/badge/arXiv-b33737?logo=arXiv" /></a>
