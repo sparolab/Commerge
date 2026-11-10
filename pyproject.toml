@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "commerge"
+dynamic = ["version"]
+description = "Commerge: communication-efficient multi-robot map merging by selecting a few scans"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Hogyun Kim", email = "hg.kim@inha.edu" }]
+dependencies = ["numpy", "scipy>=1.9", "matplotlib"]
+
+[project.optional-dependencies]
+gurobi = ["gurobipy"]          # the paper's solver; needs a Gurobi licence
+solid = ["solid-descriptor"]   # SOLiD descriptors in Python
+compare = ["scikit-learn"]     # K-means of the AutoMerge baseline (SciPy fallback otherwise)
+
+[project.scripts]
+commerge = "commerge.cli:main"
+commerge-compare = "commerge.compare:main"
+
+[project.urls]
+Homepage = "https://github.com/sparolab/Commerge"
+
+[tool.setuptools]
+packages = ["commerge", "commerge.baselines"]
+
+[tool.setuptools.dynamic]
+version = { attr = "commerge.__version__" }

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="150" viewBox="0 0 760 150">
+  <!-- communication link between the robots -->
+  <path d="M18 52 Q95 -6 172 52" fill="none" stroke="#59636e" stroke-width="1.6" stroke-dasharray="3 6" opacity="0.6"/>
+  <!-- robot A's map and robot B's map -->
+  <g transform="rotate(-9 62 92)">
+    <rect x="14" y="48" width="96" height="88" rx="12" fill="#3F51B5" opacity="0.85" stroke="#ffffff" stroke-width="2.5"/>
+    <path d="M28 120 L28 98 L54 98 L54 70 L92 70" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+  <g transform="rotate(9 128 92)">
+    <rect x="80" y="48" width="96" height="88" rx="12" fill="#00897B" opacity="0.8" stroke="#ffffff" stroke-width="2.5"/>
+    <path d="M98 66 L136 66 L136 98 L162 98 L162 122" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+  <!-- the few selected scans in the overlap -->
+  <circle cx="95" cy="70" r="8" fill="#D81B60" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="95" cy="96" r="8" fill="#D81B60" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="95" cy="122" r="8" fill="#D81B60" stroke="#ffffff" stroke-width="2.5"/>
+  <text x="205" y="88" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="72" font-weight="800" letter-spacing="-1" fill="#1f2328"><tspan fill="#3F51B5">Com</tspan><tspan fill="#D81B60">m</tspan><tspan fill="#00897B">erge</tspan></text>
+  <text x="208" y="126" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="21" font-weight="500" fill="#59636e"><tspan fill="#3F51B5" font-weight="800">Com</tspan>munication-Efficient <tspan fill="#D81B60" font-weight="800">M</tspan>ap <tspan fill="#00897B" font-weight="800">Merg</tspan>ing</text>
+</svg>

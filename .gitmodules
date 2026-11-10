@@ -1,0 +1,3 @@
+[submodule "thirdparty/SOLiD"]
+	path = thirdparty/SOLiD
+	url = https://github.com/sparolab/SOLiD.git
