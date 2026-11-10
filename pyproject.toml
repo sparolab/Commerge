@@ -10,6 +10,19 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Hogyun Kim", email = "hg.kim@inha.edu" }]
+keywords = ["map merging", "multi-robot", "multi-robot slam", "lidar", "slam", "place recognition", "point cloud",
+            "registration", "communication-efficient", "vertex cover", "maximum clique", "gurobi", "highs",
+            "solid", "kiss-matcher", "robotics"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
 dependencies = ["numpy", "scipy>=1.9", "matplotlib", "kiss-matcher>=1.0.2; python_version < '3.13'", "small-gicp>=1.0"]  # kiss-matcher wheels: Python 3.8-3.12
 
 [project.optional-dependencies]
@@ -23,6 +36,10 @@ commerge-compare = "commerge.compare:main"
 
 [project.urls]
 Homepage = "https://github.com/sparolab/Commerge"
+Documentation = "https://github.com/sparolab/Commerge/blob/main/docs/GUIDE.md"
+"Project page" = "https://sparolab.github.io/research/commerge/"
+Paper = "https://arxiv.org/abs/2606.25386"
+Issues = "https://github.com/sparolab/Commerge/issues"
 
 [tool.setuptools]
 packages = ["commerge", "commerge.baselines"]

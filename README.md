@@ -11,6 +11,7 @@
   <a href="https://github.com/sparolab/SOLiD"><img src="https://img.shields.io/badge/SOLiD-descriptor-3F51B5" /></a>
   <a href="#installation"><img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" /></a>
   <a href="#installation"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" /></a>
+  <a href="#docker"><img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" /></a>
   <a href="https://github.com/sparolab/Commerge/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD--3--Clause-green" /></a>
   <a href="https://github.com/sparolab/Commerge/actions/workflows/ci.yml"><img src="https://github.com/sparolab/Commerge/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
   <br />
@@ -18,6 +19,8 @@
   <a href="https://arxiv.org/abs/2606.25386"><img src="https://img.shields.io/badge/arXiv-b33737?logo=arXiv" /></a>
   <a href="https://sparolab.github.io/research/commerge/"><img src="https://img.shields.io/badge/IJRR-2026-1f6feb" /></a>
   <a href="https://youtu.be/LV_8_jZbHV8"><img src="https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white" /></a>
+  <a href="#robot-run-with-your-agent"><img src="https://img.shields.io/badge/Claude%20Code-ready-D97757?logo=claude&logoColor=white" alt="Claude Code ready" /></a>
+  <a href="#robot-run-with-your-agent"><img src="https://img.shields.io/badge/Codex-ready-000000?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMS41IiB5PSIzIiB3aWR0aD0iMjEiIGhlaWdodD0iMTgiIHJ4PSIzIiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNNiA5bDMuNSAzTDYgMTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTEyIDE1LjVoNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=" alt="Codex ready" /></a>
   <br />
   <a href="https://pypi.org/project/commerge/"><img src="https://readme-typing-svg.demolab.com?background=0D1117&color=22C55E&font=Fira+Code&size=14&duration=2500&pause=800&center=true&vCenter=true&width=230&height=24&lines=%24+pip+install+commerge" alt="pip install commerge" /></a>
   <br />
@@ -61,6 +64,15 @@ commerge --version
 
 Ubuntu and macOS (Python only, no ROS needed for Commerge itself).
 
+### Docker
+
+```bash
+docker pull ghcr.io/sparolab/commerge     # or: docker build -f docker/Dockerfile -t ghcr.io/sparolab/commerge .
+docker run --rm -v $HOME/robot_a:/a -v $HOME/robot_b:/b -v $PWD/merged:/out ghcr.io/sparolab/commerge \
+    commerge /a /b --threshold 0.96 --min-area 2000 --out /out --plot
+# Gurobi: add -v $HOME/gurobi.lic:/opt/gurobi/gurobi.lic (otherwise HiGHS)
+```
+
 ## :rocket: Run
 
 **1. One session per robot** with SOLiD, with any odometry it supports ([FAST-LIO, KISS-ICP, GeoRIO, …](https://github.com/sparolab/SOLiD/tree/main/slam)) or without ROS:
@@ -92,6 +104,18 @@ All outputs, options and the Python API: [docs/GUIDE.md](https://github.com/spar
 ## :bar_chart: Compare
 
 `commerge-compare` runs Commerge, its ablations and AutoMerge on the same sessions. On KITTI 00 split into two robots, Commerge sends **31 of 2,712 scans (4.6 MB)** and merges the maps within **0.35 m**; AutoMerge's region sends 156 scans and merges within 1.05 m. Details and the ablations: [docs/GUIDE.md](https://github.com/sparolab/Commerge/blob/main/docs/GUIDE.md#compare-commerge-compare).
+
+______________________________________________________________________
+
+## :robot: Run with your agent
+
+Open [Claude Code](https://claude.com/claude-code) or [Codex](https://openai.com/codex/) in an empty folder and paste:
+
+```text
+Clone https://github.com/sparolab/Commerge, read its AGENTS.md, and follow it to install Commerge and merge KITTI 00 split into two robots on this machine. Ask me what you need along the way.
+```
+
+The agent follows [`AGENTS.md`](https://github.com/sparolab/Commerge/blob/main/AGENTS.md): it installs Commerge with Gurobi or HiGHS, makes one SOLiD session per robot, selects and exchanges the scans, merges the maps, and checks the result.
 
 ______________________________________________________________________
 
@@ -127,4 +151,4 @@ Commerge uses [SOLiD](https://github.com/sparolab/SOLiD) for inter-robot place r
 
 ## Special Thanks
 
-We thank [Minwoo Jung](https://github.com/minwoo0611).
+We thank [Minwoo Jung](https://github.com/minwoo0611) for [HeLiOS](https://github.com/minwoo0611/HeLiOS) and the [HeLiPR](https://sites.google.com/view/heliprdataset) dataset, and [Nikolaos Stathoulopoulos](https://github.com/nstathou) for [InLiER](https://github.com/LTU-RAI/InLiER), learning-free heterogeneous LiDAR place recognition.

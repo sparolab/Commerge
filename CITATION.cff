@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use Commerge, please cite the paper below."
+title: "Commerge: communication-efficient multi-robot LiDAR map merging"
+type: software
+version: 1.1.0
+date-released: 2026-11-10
+repository-code: "https://github.com/sparolab/Commerge"
+url: "https://sparolab.github.io/research/commerge/"
+license: BSD-3-Clause
+keywords: [map-merging, multi-robot, lidar, slam, place-recognition, registration, communication-efficient]
+authors: &authors
+  - family-names: Kim
+    given-names: Hogyun
+  - family-names: Choi
+    given-names: Jiwon
+  - family-names: Kim
+    given-names: Juwon
+  - family-names: Yang
+    given-names: Geonmo
+  - family-names: Jeong
+    given-names: Seokhwan
+  - family-names: Lim
+    given-names: Hyungtae
+  - family-names: Cho
+    given-names: Younggun
+preferred-citation:
+  type: article
+  title: "Commerge: Communication-Efficient, Robust, and Fast LiDAR Map Merging Framework for Multi-Robot Coordination in Resource-Constrained Scenarios"
+  authors: *authors
+  journal: "International Journal of Robotics Research (IJRR)"
+  year: 2026
