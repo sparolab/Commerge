@@ -151,4 +151,4 @@ Commerge uses [SOLiD](https://github.com/sparolab/SOLiD) for inter-robot place r
 
 ## Special Thanks
 
-We thank [Minwoo Jung](https://github.com/minwoo0611) for [HeLiOS](https://github.com/minwoo0611/HeLiOS) and the [HeLiPR](https://sites.google.com/view/heliprdataset) dataset, and [Nikolaos Stathoulopoulos](https://github.com/nstathou) for [InLiER](https://github.com/LTU-RAI/InLiER), learning-free heterogeneous LiDAR place recognition.
+We thank [Nikolaos Stathoulopoulos](https://github.com/nstathou) for [InLiER](https://github.com/LTU-RAI/InLiER), learning-free heterogeneous LiDAR place recognition.
