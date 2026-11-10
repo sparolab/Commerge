@@ -1,0 +1,6 @@
+.git
+thirdparty/SOLiD
+thirdparty/KISS-Matcher
+assets
+**/__pycache__
+*.egg-info
