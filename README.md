@@ -31,6 +31,7 @@ ______________________________________________________________________
 
 Robots that map on their own must exchange scans to merge their maps, and over a weak link that exchange is the bottleneck. Commerge picks the few scans that carry the overlap and sends only those, in three steps:
 
+- :robot: **Before the steps, each robot runs its own SLAM with [SOLiD](https://github.com/sparolab/SOLiD)**: keyframe scans, poses and SOLiD descriptors, saved as a session.
 - :link: **Step (A) Sequential matching**: regions of the inter-robot affinity matrix where both robots saw the same places in sequence.
 - :balance_scale: **Step (B) Balanced minimum vertex cover**: the fewest keyframes that still touch every candidate match, shared fairly between the robots.
 - :gem: **Step (C) Maximum edge-weighted clique**: among those, only the pairs that agree with each other geometrically.
