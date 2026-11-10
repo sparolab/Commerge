@@ -100,7 +100,12 @@ def main(argv=None) -> int:
             d = np.array([np.linalg.norm(gt[0][a] - gt[1][b]) for a, b in pairs])
             row["pair_precision"] = float((d <= args.gt_radius).mean())
         if not args.no_register and ka and kb:
-            reg = register(build_submap(A, ka), build_submap(B, kb))
+            try:
+                reg = register(build_submap(A, ka), build_submap(B, kb))
+            except ImportError:
+                args.no_register = True
+                print("[compare] kiss-matcher not installed: registration skipped")
+                reg = None
             row["registered"] = reg is not None
             if reg is not None and gtT is not None:
                 et, er, em = alignment_error(reg.T_a_b, A.poses, B.poses, *gtT)

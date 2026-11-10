@@ -61,8 +61,9 @@ def register(submap_a: np.ndarray, submap_b: np.ndarray, voxel: float = 0.5,
     try:
         import kiss_matcher as km
         import small_gicp
-    except ImportError as e:  # pragma: no cover
-        raise SystemExit("registration needs kiss-matcher and small-gicp: pip install kiss-matcher small-gicp") from e
+    except ImportError as e:  # kiss-matcher has wheels for Python 3.8-3.12 only
+        raise ImportError("registration needs kiss-matcher and small-gicp (pip install kiss-matcher small-gicp; "
+                          "kiss-matcher wheels exist for Python 3.8-3.12)") from e
     t = time.perf_counter()
     src = np.ascontiguousarray(submap_b[:, :3], dtype=np.float32)
     tgt = np.ascontiguousarray(submap_a[:, :3], dtype=np.float32)

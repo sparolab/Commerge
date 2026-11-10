@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Hogyun Kim", email = "hg.kim@inha.edu" }]
-dependencies = ["numpy", "scipy>=1.9", "matplotlib", "kiss-matcher>=1.0.2", "small-gicp>=1.0"]
+dependencies = ["numpy", "scipy>=1.9", "matplotlib", "kiss-matcher>=1.0.2; python_version < '3.13'", "small-gicp>=1.0"]  # kiss-matcher wheels: Python 3.8-3.12
 
 [project.optional-dependencies]
 gurobi = ["gurobipy"]          # the paper's solver; needs a Gurobi license

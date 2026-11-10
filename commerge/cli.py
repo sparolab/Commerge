@@ -123,8 +123,14 @@ def main(argv=None) -> int:
             save_submap(out / "submap_A.pcd", sub_a)
             save_submap(out / "submap_B.pcd", sub_b)
         if not args.no_register:
-            reg = register(sub_a, sub_b, args.reg_voxel)
-            if reg is None:
+            try:
+                reg = register(sub_a, sub_b, args.reg_voxel)
+            except ImportError as e:
+                reg = False
+                print(f"[commerge] registration skipped: {e}")
+            if reg is False:
+                pass
+            elif reg is None:
                 print("[commerge] registration failed (too few inliers); try another --policy")
             else:
                 np.savetxt(out / "T_a_b.txt", reg.T_a_b, fmt="%.9f")

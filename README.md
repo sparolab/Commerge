@@ -49,7 +49,7 @@ ______________________________________________________________________
 | Python | 3.9 or newer, with NumPy, SciPy and Matplotlib (installed with the package) |
 | Optimization solver | **[Gurobi](https://www.gurobi.com/academia/academic-program-and-licenses/)**, as in the paper: **free for academic use** (named academic license, `pip install gurobipy`, then `grbgetkey <key>`). <br/> **No Gurobi license?** Use **HiGHS**: it ships with SciPy, so there is nothing to install. It returns the same selection, only slower on the largest regions. |
 | Keyframe sessions | one per robot, from [SOLiD](https://github.com/sparolab/SOLiD) (included as `thirdparty/SOLiD`): keyframe scans, poses and SOLiD descriptors |
-| Registration | [KISS-Matcher](https://github.com/MIT-SPARK/KISS-Matcher) (included as `thirdparty/KISS-Matcher`) and [small_gicp](https://github.com/koide3/small_gicp), installed with the package (`kiss-matcher`, `small-gicp` wheels) |
+| Registration | [KISS-Matcher](https://github.com/MIT-SPARK/KISS-Matcher) (included as `thirdparty/KISS-Matcher`) and [small_gicp](https://github.com/koide3/small_gicp), installed with the package. KISS-Matcher wheels exist for **Python 3.9-3.12**; on newer Python, the selection runs and the registration is skipped |
 
 The solver is picked with `--solver`: `auto` (default: Gurobi if it is installed and licensed, HiGHS otherwise), `gurobi` or `highs`.
 
