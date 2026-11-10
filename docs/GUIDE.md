@@ -20,8 +20,10 @@ Everything the [README](../README.md) leaves out: outputs, options, the Python A
 | `--solver` | `auto` | `gurobi`, `highs` or `auto` |
 | `--policy` | `score` | region(s) whose scans are exchanged: `score` (largest step-(C) clique weight), `area`, `candidates` or `all` |
 | `--no-register`, `--reg-voxel` | `0.5` | skip the registration; its voxel size (m) |
+| `--registration` | `kiss` | `kiss`: KISS-Matcher + GICP; `grid` (experimental): yaw and x-y search (+-40 m) around up to 5 exchanged pairs, then ICP, for scans too different for feature matching |
 | `--gt-a`, `--gt-b` | | ground-truth keyframe poses (KITTI, common frame) to report the merge error |
 | `--affinity` | SOLiD | any `(N_A, N_B)` `.npy` instead (another descriptor) |
+| `--enhance` | `0` | experimental: sequence-enhance the affinity over L keyframes before step (A) (row/column z-scores, then the diagonal and anti-diagonal average); the threshold becomes a z-score (about 3) |
 | `--poses` | `auto` | `optimized` (loop-closed) or `odom` keyframe poses |
 | `--min-range`, `--voxel` | `3.0`, `0` | submap: drop points near the sensor, optional voxel size |
 

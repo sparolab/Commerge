@@ -37,6 +37,22 @@ def cosine_affinity(desc_a: np.ndarray, desc_b: np.ndarray) -> np.ndarray:
     return a @ b.T
 
 
+def enhance_affinity(affinity: np.ndarray, length: int) -> np.ndarray:
+    """Sequence-enhanced affinity, for descriptors whose scores drift between keyframes (e.g. across
+    heterogeneous LiDARs): each score as a z-score within its row and within its column (averaged), then
+    averaged along the best of the diagonal (both robots in the same direction) and the anti-diagonal
+    (opposite directions) over ``length`` keyframes. Scores become z-scores: thresholds around 3."""
+    from scipy.ndimage import convolve
+
+    S = np.asarray(affinity, dtype=float)
+    z = 0.5 * ((S - S.mean(1, keepdims=True)) / (S.std(1, keepdims=True) + 1e-12)
+               + (S - S.mean(0, keepdims=True)) / (S.std(0, keepdims=True) + 1e-12))
+    if length <= 1:
+        return z
+    k = np.eye(length) / length
+    return np.maximum(convolve(z, k, mode="constant"), convolve(z, k[::-1], mode="constant"))
+
+
 def extract_regions(affinity: np.ndarray, threshold: float, min_area: int) -> List[Tuple[int, int, int, int]]:
     """Bounding boxes (a0, a1, b0, b1), half-open, of the connected regions above ``threshold``
     whose box area is at least ``min_area``; rows index robot A, columns robot B."""

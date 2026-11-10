@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use Commerge, please cite the paper below."
 title: "Commerge: communication-efficient multi-robot LiDAR map merging"
 type: software
-version: 1.1.0
+version: 2.0.0
 date-released: 2026-11-10
 repository-code: "https://github.com/sparolab/Commerge"
 url: "https://sparolab.github.io/research/commerge/"

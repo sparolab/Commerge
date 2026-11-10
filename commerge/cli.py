@@ -17,8 +17,8 @@ from pathlib import Path
 import numpy as np
 
 from . import __version__
-from .selection import STEPS, cosine_affinity, select
-from .merge import POLICIES, alignment_error, choose_regions, register
+from .selection import STEPS, cosine_affinity, enhance_affinity, select
+from .merge import POLICIES, alignment_error, choose_regions, register_exchanged
 from .session import Session, read_kitti_poses
 from .solvers import SOLVERS
 from .submap import build_submap, save_submap
@@ -37,6 +37,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     g.add_argument("--poses", default="auto", help="auto | optimized | odom: keyframe poses to use")
     g = p.add_argument_group("selection")
     g.add_argument("--threshold", type=float, required=True, help="affinity threshold of a candidate pair")
+    g.add_argument("--enhance", type=int, default=0, metavar="L",
+                   help="sequence-enhance the affinity over L keyframes before step (A) (row/column z-scores, "
+                        "diagonal and anti-diagonal average; thresholds become z-scores, ~3), e.g. for "
+                        "heterogeneous LiDARs; 0: off (default)")
     g.add_argument("--min-area", type=int, required=True, help="smallest region (cells of its bounding box)")
     g.add_argument("--consistency", type=float, default=3.0,
                    help="largest distance mismatch (m) between two consistent pairs (default: 3)")
@@ -53,6 +57,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     g.add_argument("--no-register", action="store_true",
                    help="do not register the exchanged submaps (registration needs kiss-matcher, small-gicp)")
     g.add_argument("--reg-voxel", type=float, default=0.5, help="registration voxel size (m)")
+    g.add_argument("--registration", choices=("kiss", "grid"), default="kiss",
+                   help="kiss: KISS-Matcher + GICP (default); grid: yaw and x-y search around the best selected "
+                        "pair + ICP, for heterogeneous LiDARs")
     g.add_argument("--gt-a", type=Path, help="ground-truth keyframe poses of A (KITTI, common frame): report the error")
     g.add_argument("--gt-b", type=Path, help="ground-truth keyframe poses of B (same frame as --gt-a)")
     g = p.add_argument_group("output")
@@ -91,6 +98,9 @@ def main(argv=None) -> int:
         print(f"[commerge] affinity {aff.shape} from {args.descriptor} in {time.perf_counter() - t:.2f} s")
         np.save(out / "affinity.npy", aff.astype(np.float32))
 
+    if args.enhance:
+        aff = enhance_affinity(aff, args.enhance)
+        print(f"[commerge] affinity sequence-enhanced over {args.enhance} keyframes")
     sel = select(aff, A.positions, B.positions, args.threshold, args.min_area, args.consistency,
                  args.steps, args.solver, args.time_limit, args.verbose)
 
@@ -124,7 +134,9 @@ def main(argv=None) -> int:
             save_submap(out / "submap_B.pcd", sub_b)
         if not args.no_register:
             try:
-                reg = register(sub_a, sub_b, args.reg_voxel)
+                reg = register_exchanged(sub_a, sub_b, A.poses, B.poses,
+                                         [p for k in chosen for p in sel.regions[k].pairs], aff,
+                                         args.registration, args.reg_voxel)
             except ImportError as e:
                 reg = False
                 print(f"[commerge] registration skipped: {e}")
@@ -137,7 +149,9 @@ def main(argv=None) -> int:
                 merged = np.einsum("ij,njk->nik", reg.T_a_b, B.poses)[:, :3, :4].reshape(len(B), 12)
                 np.savetxt(out / "poses_b_in_a.txt", merged, fmt="%.9f")
                 summary["registration"] = {"inliers": reg.inliers, "gicp_error": reg.fitness, "seconds": reg.seconds}
-                msg = f"[commerge] registered B to A: {reg.inliers} KISS-Matcher inliers, GICP in {reg.seconds:.1f} s"
+                msg = (f"[commerge] registered B to A: {reg.inliers} KISS-Matcher inliers, GICP in {reg.seconds:.1f} s"
+                       if args.registration == "kiss" else
+                       f"[commerge] registered B to A (grid + ICP): fit {reg.fitness:.2f} in {reg.seconds:.1f} s")
                 if args.gt_a and args.gt_b:
                     et, er, em = alignment_error(reg.T_a_b, A.poses, B.poses, read_kitti_poses(args.gt_a),
                                                  read_kitti_poses(args.gt_b))
