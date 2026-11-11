@@ -49,6 +49,7 @@ ap.add_argument("--gt-b-moved", action="store_true", help=argparse.SUPPRESS)
 ap.add_argument("--point-size", type=int, default=320, help="points drawn per keyframe")
 ap.add_argument("--point-alpha", type=float, default=0.9, help="map point opacity (higher = darker)")
 ap.add_argument("--point-px", type=int, default=1, help="map point size in pixels (supersampled)")
+ap.add_argument("--sensor", default="", help="badge on the map, e.g. '4D RADAR · SOLiD'")
 ap.add_argument("--range", type=float, default=35.0, help="points kept around each keyframe (m)")
 ap.add_argument("--frames", type=Path, help="keep the PNG frames here")
 ap.add_argument("--only", default="", help="render only these frames, e.g. 40,150 (preview)")
@@ -410,6 +411,12 @@ for f in (ONLY or range(TOTAL)):
     d.text((18 * SS, 14 * SS), "● " + LAB_A, font=font(13), fill=BLUE)
     xb = 18 * SS + d.textlength("● " + LAB_A, font=font(13)) + 22 * SS
     d.text((xb, 14 * SS), "● " + LAB_B, font=font(13), fill=TEAL)
+    if args.sensor:  # sensor badge, top right of the map panel
+        fb = font(13)
+        tw = d.textlength(args.sensor, font=fb)
+        x1 = (MW - 24) * SS
+        d.rounded_rectangle([x1 - tw - 24 * SS, 10 * SS, x1, 36 * SS], radius=13 * SS, fill=INK)
+        d.text((x1 - tw - 12 * SS, 23 * SS), args.sensor, font=fb, fill=(255, 255, 255), anchor="lm")
     if f >= STARTS["send"]:
         a = ease(phase(f, "send") * 2)
         shown = int(round(a * n_sent))

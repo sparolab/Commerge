@@ -46,5 +46,5 @@ Keyframes exchanged: the share of both robots' keyframes; with `--registration p
 ```bash
 git submodule update --init tools/demo/radar/thirdparty/RadLoc tools/demo/sonar/thirdparty/sonar_context tools/demo/thermal/thirdparty/AnyThermal tools/demo/thermal/thirdparty/BridgeMultiSpectralDepth
 python tools/demo/make_gif.py runs/radar/robot_a runs/radar/robot_b --affinity runs/radar/affinity.npy \
-    --threshold 0.93 --min-area 50 --registration pairs --range 80 --out radar.gif
+    --threshold 0.93 --min-area 50 --registration pairs --range 80 --sensor "RADAR · RadLoc" --out radar.gif
 ```
