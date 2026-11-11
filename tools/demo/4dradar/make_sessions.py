@@ -11,7 +11,9 @@ writes them), their keyframe poses replaced by ground truth and robot B's moved 
     commerge runs/4dradar/robot_a runs/4dradar/robot_b --threshold 0.96 --min-area 30 --registration pairs \
         --policy all --out runs/4dradar/merged --gt-a runs/4dradar/robot_a/gt_poses.txt --gt-b runs/4dradar/robot_b/gt_poses.txt
 
-The sessions keep their Scans/ and SOLiDs/ (symbolic links), so --registration kiss also works on them.
+The sessions keep their Scans/ and SOLiDs/ (symbolic links), so --registration kiss also works on them. The ground
+truth is the pose of another sensor (SNAIL: the XT32 LiDAR), so the radar-to-ground-truth extrinsic is estimated from
+each session's own odometry (its rotation is about -92 deg of yaw on SNAIL) and applied: poses = ground truth @ X.
 """
 import argparse
 import os
@@ -43,9 +45,32 @@ def load_gt(path):
     return g[:, 0], T
 
 
+def extrinsic(odom, gt):
+    """X with gt_k @ X = W @ odom_k: W aligns the odometry frame to the ground truth's (positions), X averages
+    gt_k^-1 @ W @ odom_k (rotations averaged, translations median)."""
+    A, B = odom[:, :3, 3], gt[:, :3, 3]
+    ma, mb = A.mean(0), B.mean(0)
+    U, _, Vt = np.linalg.svd((B - mb).T @ (A - ma))
+    D = np.diag([1.0, 1.0, np.sign(np.linalg.det(U @ Vt))])
+    W = np.eye(4)
+    W[:3, :3] = U @ D @ Vt
+    W[:3, 3] = mb - W[:3, :3] @ ma
+    Xs = np.linalg.inv(gt) @ W @ odom
+    X = np.eye(4)
+    X[:3, :3] = Rotation.from_matrix(Xs[:, :3, :3]).mean().as_matrix()
+    X[:3, 3] = np.median(Xs[:, :3, 3], axis=0)
+    return X
+
+
 for name, src, gt, move in (("robot_a", a.a, a.gt_a, None), ("robot_b", a.b, a.gt_b, rigid(a.yaw, a.shift))):
     t = np.loadtxt(Path(src) / "times.txt", ndmin=1)
     T = interpolate_poses(t, *load_gt(gt))
+    odom = np.tile(np.eye(4), (len(t), 1, 1))
+    odom[:, :3, :4] = np.loadtxt(Path(src) / "odom_poses.txt").reshape(-1, 3, 4)
+    X = extrinsic(odom, T)
+    print(f"{name}: sensor-to-ground-truth extrinsic yaw {np.degrees(np.arctan2(X[1, 0], X[0, 0])):.1f} deg, "
+          f"t {X[:3, 3].round(2)} m")
+    T = T @ X
     root = write_session(Path(a.out) / name, T, t, move=move)
     for d in ("Scans", "SOLiDs"):
         if (Path(src) / d).is_dir() and not (root / d).exists():

@@ -152,15 +152,7 @@ commerge robot_a robot_b --affinity affinity.npy --threshold T --min-area N --re
     --out merged/                              # robot_*: odom_poses.txt (KITTI format), one row per keyframe
 ```
 
-Pick `--threshold` around the top 0.1 % of the affinity and `--min-area` from the keyframe spacing (a few tens of keyframes in sequence). `--policy all` hands the pairs of every region to the fit, which pins down the rotation. Each demo below splits real data into two robots, moves robot B into its own frame (**yaw 60°, (30, −20, 0) m**) and lets Commerge find it back; every map is drawn from that sensor's own points (radar detections, sonar returns, stereo or thermal depth), no LiDAR:
-
-| Sensor | Descriptor | Data | Keyframes exchanged | Rotation error | B's keyframes off | Demo |
-| --- | --- | --- | ---: | ---: | ---: | --- |
-| 4D radar | [SOLiD](https://github.com/sparolab/SOLiD) | SNAIL-Radar, two days | 1.7 % | 0.33° | 0.57 m | [tools/demo/4dradar](tools/demo/4dradar) |
-| Radar (Navtech) | [RadLoc](https://github.com/sparolab/RadLoc) | MulRan KAIST_03 | 1.2 % | 0.05° | 0.45 m | [tools/demo/radar](tools/demo/radar) |
-| Imaging sonar | [Sonar Context](https://github.com/sparolab/sonar_context) | Aracati 2017 | 4.5 % | 3.0° | 1.33 m | [tools/demo/sonar](tools/demo/sonar) |
-| Thermal camera | [AnyThermal](https://github.com/castacks/AnyThermal) | ViViD++ campus, day vs night | 2.1 % | 0.16° | 1.09 m | [tools/demo/thermal](tools/demo/thermal) |
-| Camera | [MegaLoc](https://github.com/gmberton/MegaLoc) | KITTI 00 | 2.1 % | 0.22° | 1.90 m | [tools/demo/camera](tools/demo/camera) |
+Five demos split real data into two robots, move robot B into its own frame and let Commerge find it back, with maps drawn from each sensor's own points (no LiDAR). Results, how to pick `--threshold` / `--min-area`, and the commands: **[tools/demo](tools/demo)**.
 
 <table>
   <tr>
@@ -176,8 +168,6 @@ Pick `--threshold` around the top 0.1 % of the affinity and `--min-area` from th
     <td></td>
   </tr>
 </table>
-
-Exchanged keyframes are the share of both robots' keyframes; with `--registration pairs` only their poses travel (a few KB). The rotation and position errors are against each dataset's ground truth.
 
 ______________________________________________________________________
 
