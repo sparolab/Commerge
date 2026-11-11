@@ -80,8 +80,6 @@ sel = cc.select(affinity, pos_a, pos_b, threshold=0.96, min_area=2000)   # same 
 sel.keyframes_a, sel.keyframes_b, sel.pairs
 ```
 
-On KITTI 00 the C++ command selects the same pairs as the Python package (Gurobi and HiGHS), the same 14 A + 17 B scans, and merges within the same 0.35 m, 0.06°.
-
 ### Docker
 
 ```bash
