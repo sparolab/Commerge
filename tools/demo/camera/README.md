@@ -1,6 +1,6 @@
 # Camera with MegaLoc
 
-<p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/camera.gif" alt="Commerge on KITTI 00 with the camera only: maps from stereo depth, MegaLoc affinity, steps (A)-(C) and the merge" width="95%" /></p>
+<p align="center"><img src="demo.gif" alt="Commerge on KITTI 00 with the camera only: maps from stereo depth, MegaLoc affinity, steps (A)-(C) and the merge" width="95%" /></p>
 
 The main demo's two robots (KITTI 00: robot A frames 0–1999, robot B 2000–4540, the same keyframes), described by the left color camera instead of SOLiD. Keyframe poses: KITTI ground truth in the LiDAR frame, robot B's moved into its own frame (**yaw 60°, (30, −20, 0) m**). The descriptor is [MegaLoc](https://github.com/gmberton/MegaLoc) (`torch.hub`, 8448-D), compared by cosine similarity.
 

@@ -1,6 +1,6 @@
 # Thermal camera with AnyThermal
 
-<p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/thermal.gif" alt="Commerge on ViViD++ campus with a thermal camera, robot A by day and robot B by night: maps from thermal depth, AnyThermal affinity, steps (A)-(C) and the merge" width="95%" /></p>
+<p align="center"><img src="demo.gif" alt="Commerge on ViViD++ campus with a thermal camera, robot A by day and robot B by night: maps from thermal depth, AnyThermal affinity, steps (A)-(C) and the merge" width="95%" /></p>
 
 Two robots on the ViViD++ **campus** route: robot A drives it by day (`campus_day1`, 1,635 keyframes), robot B by night (`campus_night`, 1,645 keyframes), every 2 m of GPS motion. Robot B is moved into its own frame (**yaw 60°, (30, −20, 0) m**). The descriptor is [AnyThermal](https://github.com/castacks/AnyThermal) (ICRA 2026: DINOv2 distilled to thermal, SALAD head; checkpoints on [Hugging Face](https://huggingface.co/theairlabcmu/AnyThermal)), compared by cosine similarity. AnyThermal's backbone was distilled on data that include ViViD++, so this is not a zero-shot result.
 

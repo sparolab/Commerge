@@ -1,6 +1,6 @@
 # 4D radar with SOLiD
 
-<p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/4dradar.gif" alt="Commerge on two days of SNAIL-Radar with SOLiD on 4D radar: maps from the accumulated radar submaps, steps (A)-(C) and the merge" width="95%" /></p>
+<p align="center"><img src="demo.gif" alt="Commerge on two days of SNAIL-Radar with SOLiD on 4D radar: maps from the accumulated radar submaps, steps (A)-(C) and the merge" width="95%" /></p>
 
 Two days of the SNAIL-Radar **st** route: robot A on 2024-01-13 (422 keyframes), robot B on 2023-12-13 (221 keyframes). Each robot runs [SOLiD](https://github.com/sparolab/SOLiD)'s radar SLAM (`thirdparty/SOLiD`, ROS 2, GeoRIO odometry), which accumulates the 4D radar points of each keyframe into a submap and describes it with SOLiD, and saves a session. The demo replaces the keyframe poses by ground truth (with the radar's extrinsic) and moves robot B's into its own frame (**yaw 60°, (30, −20, 0) m**).
 

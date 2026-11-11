@@ -1,6 +1,6 @@
 # Spinning radar (Navtech) with RadLoc
 
-<p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/radar.gif" alt="Commerge on MulRan KAIST_03 split into two radar robots: maps from the radar's own detections, RadLoc affinity, steps (A)-(C) and the merge" width="95%" /></p>
+<p align="center"><img src="demo.gif" alt="Commerge on MulRan KAIST_03 split into two radar robots: maps from the radar's own detections, RadLoc affinity, steps (A)-(C) and the merge" width="95%" /></p>
 
 Two robots from MulRan **KAIST_03**: robot A drives the first half (1,172 keyframes, every 2 m), robot B the second half, which re-drives much of A's route. Robot B starts in its own frame: its poses are moved by **yaw 60°, (30, −20, 0) m**. The descriptor is [RadLoc](https://github.com/sparolab/RadLoc) (`thirdparty/RadLoc`, ReFeree++ range bands), compared by its fine distance (mean absolute difference); the affinity is `1 − D / max D`.
 
