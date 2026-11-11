@@ -2,7 +2,7 @@
 
 <p align="center"><img src="demo.gif" alt="Commerge on Aracati 2017 split into two sonar robots: the maps are drawn from the forward-looking sonar's returns, Sonar Context gives the affinity, steps (A)-(C) keep a few consistent pairs and the maps merge" width="95%" /></p>
 
-Two robots from **Aracati 2017** (an ROV with a BlueView P900-130 forward-looking sonar in a marina): robot A is the first half of the run, robot B the second half (298 keyframes each, every 1 m), moved into its own frame (**yaw 60°, (30, −20, 0) m**). The descriptor is [Sonar Context](https://github.com/sparolab/sonar_context) (`thirdparty/sonar_context`): the max of 4 × 4 patches of the polar image (range × beams), compared by the mean column cosine similarity at the best column (bearing) shift, as its `col_distance_sc` does (vectorized here).
+Two robots from **Aracati 2017** (an ROV with a BlueView P900-130 forward-looking sonar in a marina): robot A is the first half of the run, robot B the second half (298 keyframes each, every 1 m), moved into its own frame (**yaw 60°, (30, −20, 0) m**). The descriptor is [Sonar Context](https://github.com/sparolab/sonar_context) (`thirdparty/sonar_context`): the max of 4 × 4 patches of the polar image (range × beams), compared by the mean column cosine similarity at the best column (bearing) shift: the library's `sonar_context` and `column_similarity_matrix` (v2, which fixes the original matching's off-by-one shift).
 
 ```bash
 git submodule update --init tools/demo/sonar/thirdparty/sonar_context
