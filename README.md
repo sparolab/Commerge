@@ -154,6 +154,8 @@ Five demos split real data into two robots, move robot B into its own frame and 
 
 <p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/any_sensor.gif" alt="Commerge on five sensors in turn: 4D radar (SOLiD, SNAIL-Radar), spinning radar (RadLoc, MulRan), imaging sonar (Sonar Context, Aracati 2017), thermal camera (AnyThermal, ViViD++ day vs night) and camera (MegaLoc, KITTI 00); each map is drawn from that sensor's own points, and the robots exchange a few keyframes and merge" width="95%" /></p>
 
+Each sensor on its own, with its GIF, commands and result: [4D radar](tools/demo/4dradar) · [radar](tools/demo/radar) · [sonar](tools/demo/sonar) · [thermal](tools/demo/thermal) · [camera](tools/demo/camera).
+
 ______________________________________________________________________
 
 ## :warning: Limitation: heterogeneous LiDARs
