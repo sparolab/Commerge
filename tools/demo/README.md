@@ -16,7 +16,7 @@ Shared pieces:
 - `make_gif.py`: the demo GIF for any two sessions (`--registration pairs`, `--affinity`); the maps are drawn from each keyframe's own sensor points (`<session>/points/<k>.npy`, written by each demo's `points.py`), or from LiDAR scans (`Scans/`).
 
 ```bash
-git submodule update --init --recursive tools/demo     # the descriptors
+git submodule update --init tools/demo/radar/thirdparty/RadLoc tools/demo/sonar/thirdparty/sonar_context tools/demo/thermal/thirdparty/AnyThermal tools/demo/thermal/thirdparty/BridgeMultiSpectralDepth
 python tools/demo/make_gif.py runs/radar/robot_a runs/radar/robot_b --affinity runs/radar/affinity.npy \
     --threshold 0.93 --min-area 50 --registration pairs --range 80 --out radar.gif
 ```
