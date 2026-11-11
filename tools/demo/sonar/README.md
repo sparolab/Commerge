@@ -8,6 +8,7 @@ Two robots from **Aracati 2017** (an ROV with a BlueView P900-130 forward-lookin
 git submodule update --init tools/demo/sonar/thirdparty/sonar_context
 python tools/demo/sonar/make_sessions.py --images <Aracati>/polar_image.zip --gt pose_gt.txt --out runs/sonar
 python tools/demo/sonar/points.py --images <Aracati>/polar_image.zip --sessions runs/sonar/robot_a runs/sonar/robot_b
+# GIF: python tools/demo/make_gif.py runs/sonar/robot_a runs/sonar/robot_b --affinity runs/sonar/affinity.npy --threshold 0.9 --min-area 50 --registration pairs --range 50 --point-size 1500 --point-alpha 1.6 --point-px 2 --out sonar.gif
 commerge runs/sonar/robot_a runs/sonar/robot_b --affinity runs/sonar/affinity.npy --threshold 0.9 --min-area 50 \
     --registration pairs --policy all --out runs/sonar/merged \
     --gt-a runs/sonar/robot_a/gt_poses.txt --gt-b runs/sonar/robot_b/gt_poses.txt
