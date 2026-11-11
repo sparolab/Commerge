@@ -152,20 +152,7 @@ commerge robot_a robot_b --affinity affinity.npy --threshold T --min-area N --re
 
 Five demos split real data into two robots, move robot B into its own frame and let Commerge find it back, with maps drawn from each sensor's own points (no LiDAR). Results, how to pick `--threshold` / `--min-area`, and the commands: **[tools/demo](tools/demo)**.
 
-<table>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/4dradar.gif" alt="4D radar demo" /></td>
-    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/radar.gif" alt="Radar demo" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/sonar.gif" alt="Sonar demo" /></td>
-    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/thermal.gif" alt="Thermal demo" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/camera.gif" alt="Camera demo" /></td>
-    <td></td>
-  </tr>
-</table>
+<p align="center"><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/any_sensor.gif" alt="Commerge on five sensors in turn: 4D radar (SOLiD, SNAIL-Radar), spinning radar (RadLoc, MulRan), imaging sonar (Sonar Context, Aracati 2017), thermal camera (AnyThermal, ViViD++ day vs night) and camera (MegaLoc, KITTI 00); each map is drawn from that sensor's own points, and the robots exchange a few keyframes and merge" width="95%" /></p>
 
 ______________________________________________________________________
 
