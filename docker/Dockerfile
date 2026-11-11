@@ -7,7 +7,7 @@ ENV GRB_LICENSE_FILE=/opt/gurobi/gurobi.lic PYTHONUNBUFFERED=1 MPLBACKEND=Agg
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /opt/commerge
 COPY pyproject.toml README.md LICENSE ./
-COPY commerge commerge
+COPY python python
 RUN pip install --no-cache-dir ".[gurobi,solid,compare]" && commerge --version
 WORKDIR /work
 CMD ["commerge", "--help"]

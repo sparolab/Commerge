@@ -25,4 +25,33 @@ jobs:
       - run: commerge --version && commerge-compare --help > /dev/null && python -c "import small_gicp"
       - if: matrix.python != '3.13'   # kiss-matcher wheels: Python 3.8-3.12
         run: python -c "import kiss_matcher"
-      - run: pytest -q tests
+      - run: pytest -q python/tests
+
+  cpp:
+    name: C++ core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev libflann-dev liblz4-dev libomp-dev
+      - if: runner.os == 'macOS'
+        run: brew install eigen flann lz4 libomp
+      - name: Library and command (HiGHS, KISS-Matcher + small_gicp)
+        run: |
+          cmake -S cpp -B cpp/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build cpp/build -j4
+          cpp/build/commerge_cpp --version
+      - name: Python bindings, same selection as the Python package
+        run: |
+          pip install . ./cpp pytest
+          python -c "import commerge_cpp as c; print(c.__version__, c.registration_available())"
+          pytest -q python/tests

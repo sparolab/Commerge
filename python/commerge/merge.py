@@ -169,15 +169,54 @@ def register_grid(submap_a: np.ndarray, submap_b: np.ndarray, pivot_a: np.ndarra
     return Registration(Fa @ T @ np.linalg.inv(Fb), score, fit, time.perf_counter() - t)
 
 
+def register_pairs(poses_a: np.ndarray, poses_b: np.ndarray, pairs, min_pairs: int = 3,
+                   min_spread: float = 2.0) -> Optional[Registration]:
+    """Registration without point clouds, for any sensor: the selected pairs are the same places, so B's
+    keyframe positions are fitted onto A's (yaw and translation, gravity up), dropping pairs more than twice the
+    median residual off (at least 1 m). ``inliers``: pairs kept; ``fitness``: their RMS residual (m). None with
+    fewer than ``min_pairs`` pairs or when B's keyframes span less than ``min_spread`` m (yaw unobservable)."""
+    import time
+
+    t = time.perf_counter()
+    if len(pairs) < min_pairs:
+        return None
+    p = np.array(pairs)
+    Q = poses_a[p[:, 0], :3, 3]
+    P = poses_b[p[:, 1], :3, 3]
+    if np.ptp(P[:, :2], axis=0).max() < min_spread:
+        return None
+    keep = np.ones(len(p), bool)
+    for _ in range(5):
+        ps, qs = P[keep, :2], Q[keep, :2]
+        mp, mq = ps.mean(0), qs.mean(0)
+        H = (ps - mp).T @ (qs - mq)
+        yaw = np.arctan2(H[0, 1] - H[1, 0], H[0, 0] + H[1, 1])
+        c, s = np.cos(yaw), np.sin(yaw)
+        T = np.eye(4)
+        T[:2, :2] = [[c, -s], [s, c]]
+        T[:2, 3] = mq - T[:2, :2] @ mp
+        T[2, 3] = np.median(Q[keep, 2] - P[keep, 2])
+        r = np.linalg.norm(P @ T[:3, :3].T + T[:3, 3] - Q, axis=1)
+        new = r <= max(2.0 * np.median(r[keep]), 1.0)
+        if new.sum() < min_pairs or (new == keep).all():
+            break
+        keep = new
+    rms = float(np.sqrt(np.mean(r[keep] ** 2)))
+    return Registration(T, int(keep.sum()), rms, time.perf_counter() - t)
+
+
 def register_exchanged(submap_a: np.ndarray, submap_b: np.ndarray, poses_a: np.ndarray, poses_b: np.ndarray,
                        pairs, affinity: np.ndarray, method: str = "kiss", voxel: float = 0.5,
                        pivots: int = 5) -> Optional[Registration]:
-    """Register the exchanged submaps: ``kiss`` (KISS-Matcher + GICP) or ``grid`` (``register_grid`` around
-    up to ``pivots`` exchanged pairs, the highest affinity first; the best fit wins)."""
+    """Register the exchanged submaps: ``kiss`` (KISS-Matcher + GICP), ``pairs`` (``register_pairs``: keyframe
+    positions only, no point clouds) or ``grid`` (``register_grid`` around up to ``pivots`` exchanged pairs, the
+    highest affinity first; the best fit wins)."""
     if method == "kiss":
         return register(submap_a, submap_b, voxel)
+    if method == "pairs":
+        return register_pairs(poses_a, poses_b, pairs)
     if method != "grid":
-        raise ValueError("method must be kiss or grid")
+        raise ValueError("method must be kiss, pairs or grid")
     pairs = sorted(pairs, key=lambda p: -affinity[p[0], p[1]])[:pivots]
     regs = [register_grid(submap_a, submap_b, poses_a[a], poses_b[b]) for a, b in pairs]
     regs = [r for r in regs if r is not None]

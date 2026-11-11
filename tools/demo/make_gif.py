@@ -1,9 +1,14 @@
-"""The Commerge demo GIF for any two sessions: both robots' maps, steps (A), (B), (C) on the
-affinity matrix, the one region whose scans are exchanged, and the maps merging with the transform
-registered from those scans (KISS-Matcher + GICP). Every number shown comes from the run.
+"""The Commerge demo GIF for any two sessions and any sensor: both robots' maps, steps (A), (B), (C) on the
+affinity matrix, the keyframes that are exchanged, and the maps merging with the transform registered from them
+(KISS-Matcher + GICP on the exchanged scans, or --registration pairs: the selected pairs' positions). Every number
+shown comes from the run.
 
     python tools/demo/make_gif.py <session A> <session B> --threshold 0.96 --min-area 2000 --out demo.gif
         [--affinity A_to_B.npy --affinity-label "affinity (my descriptor)" --label-a "robot A" --label-b "robot B"]
+        [--registration pairs --policy all]
+
+The maps are drawn from each keyframe's own sensor points: <session>/points/<k:06d>.npy ((N, 2+) in the keyframe's
+sensor frame: radar, sonar, camera depth...) when the folder exists, the LiDAR scans (Scans/) otherwise.
 
 Needs Pillow, matplotlib and ffmpeg (for the GIF).
 """
@@ -19,9 +24,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from scipy.spatial.transform import Rotation as Rot, Slerp
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "python"))
 from commerge import Session, cosine_affinity, select  # noqa: E402
-from commerge.merge import choose_regions, register  # noqa: E402
+from commerge.merge import choose_regions, register, register_pairs  # noqa: E402
 from commerge.selection import extract_regions  # noqa: E402
 from commerge.session import read_pcd  # noqa: E402
 from commerge.submap import build_submap  # noqa: E402
@@ -38,6 +43,12 @@ ap.add_argument("--label-a", default="robot A")
 ap.add_argument("--label-b", default="robot B")
 ap.add_argument("--intro", default="Two robots, two maps")
 ap.add_argument("--poses", default="auto", help="auto | optimized | odom")
+ap.add_argument("--registration", choices=("kiss", "pairs"), default="kiss")
+ap.add_argument("--policy", default=None, help="exchange policy (default: score for kiss, all for pairs)")
+ap.add_argument("--gt-b-moved", action="store_true", help=argparse.SUPPRESS)
+ap.add_argument("--point-size", type=int, default=320, help="points drawn per keyframe")
+ap.add_argument("--point-alpha", type=float, default=0.9, help="map point opacity (higher = darker)")
+ap.add_argument("--point-px", type=int, default=1, help="map point size in pixels (supersampled)")
 ap.add_argument("--range", type=float, default=35.0, help="points kept around each keyframe (m)")
 ap.add_argument("--frames", type=Path, help="keep the PNG frames here")
 ap.add_argument("--only", default="", help="render only these frames, e.g. 40,150 (preview)")
@@ -96,32 +107,50 @@ cover = np.array([(a, b) for r in sel.regions for a, b in cand
                   if a in set(r.cover_a) and b in set(r.cover_b) and r.box[0] <= a < r.box[1] and r.box[2] <= b < r.box[3]])
 pairs = np.array(sel.pairs)                       # step (C) pairs of every region
 ka_all, kb_all = sel.keyframes_a, sel.keyframes_b
-# exchange policy: one region (largest step-(C) clique weight); its scans are exchanged and registered
-CH = choose_regions(sel, aff, A.positions, B.positions, "score")[0]
-rch = sel.regions[CH]
-pairs_sel = np.array(rch.pairs)
-ka, kb = rch.keyframes_a, rch.keyframes_b
-reg = register(build_submap(A, ka, 3.0), build_submap(B, kb, 3.0), voxel=0.5)
+# exchange policy: the region(s) whose keyframes are exchanged and registered
+POLICY = args.policy or ("all" if args.registration == "pairs" else "score")
+CHS = choose_regions(sel, aff, A.positions, B.positions, POLICY)
+CH = CHS[0]
+CH_BOXES = {tuple(sel.regions[k].box) for k in CHS}
+pairs_sel = np.array([p for k in CHS for p in sel.regions[k].pairs])
+ka = sorted({a for k in CHS for a in sel.regions[k].keyframes_a})
+kb = sorted({b for k in CHS for b in sel.regions[k].keyframes_b})
+PAIRS = args.registration == "pairs"
+if PAIRS:
+    reg = register_pairs(A.poses, B.poses, [tuple(p) for p in pairs_sel])
+else:
+    reg = register(build_submap(A, ka, 3.0), build_submap(B, kb, 3.0), voxel=0.5)
 if reg is None:
-    sys.exit("registration of the exchanged scans failed: try other --threshold / --min-area")
+    sys.exit("registration failed: try other --threshold / --min-area")
 T_AB = reg.T_a_b
-print(f"exchange region {CH}: {len(ka)} + {len(kb)} scans; T from KISS-Matcher + GICP")
+print(f"exchange regions {CHS}: {len(ka)} + {len(kb)} keyframes; T from " + ("the selected pairs" if PAIRS else "KISS-Matcher + GICP"))
 n_sent, n_total = len(ka) + len(kb), len(A) + len(B)
-mb = lambda s, ks: sum(s.scans[k].stat().st_size for k in ks) / 1e6  # noqa: E731
-MB_ALL = mb(A, range(len(A))) + mb(B, range(len(B)))
-MB_SENT = mb(A, ka) + mb(B, kb)
-print(f"data {MB_SENT:.1f} MB of {MB_ALL:.0f} MB")
+if PAIRS:  # only keyframe poses travel
+    UNIT, SIZE_U = "keyframes", "KB"
+    MB_ALL, MB_SENT = n_total * 96 / 1e3, n_sent * 96 / 1e3
+else:
+    UNIT, SIZE_U = "scans", "MB"
+    mb = lambda s, ks: sum(s.scans[k].stat().st_size for k in ks) / 1e6  # noqa: E731
+    MB_ALL = mb(A, range(len(A))) + mb(B, range(len(B)))
+    MB_SENT = mb(A, ka) + mb(B, kb)
+print(f"data {MB_SENT:.1f} {SIZE_U} of {MB_ALL:.0f} {SIZE_U}")
 print(f"regions {len(boxes)}, candidates {len(cand)}, cover pairs {len(cover)}, selected {len(pairs)} pairs, "
-      f"{n_sent}/{n_total} scans")
+      f"{n_sent}/{n_total} {UNIT}")
 
 # maps: a few points per keyframe, in each robot's frame
 rng = np.random.default_rng(0)
 
 
-def local_points(s, n, stride):
+def local_points(s, root, n, stride):
     out = []
+    pdir = Path(root) / "points"
     for k in range(0, len(s), stride):
-        q = read_pcd(s.scans[k])[:, :3]
+        f = pdir / f"{k:06d}.npy"
+        if f.exists():
+            q = np.load(f).astype(float)
+            q = np.c_[q[:, :2], q[:, 2] if q.shape[1] > 2 else np.zeros(len(q))]
+        else:
+            q = read_pcd(s.scans[k])[:, :3]
         q = q[np.linalg.norm(q[:, :2], axis=1) < RMAX]
         if len(q) > n:
             q = q[rng.choice(len(q), n, replace=False)]
@@ -129,8 +158,8 @@ def local_points(s, n, stride):
     return out
 
 
-ptsA = local_points(A, 320, 2)
-ptsB = local_points(B, 320, 2)
+ptsA = local_points(A, args.session_a, args.point_size, 2)
+ptsB = local_points(B, args.session_b, args.point_size, 2)
 D = T_AB                                        # B's frame -> A's frame, from the exchanged scans
 span = np.ptp(A.positions[:, :2], axis=0)
 OFFSET = np.eye(4)
@@ -213,8 +242,8 @@ def phase(f, name):
 # affinity panel geometry
 AX0, AY0 = MW + 30, 92
 AW = W - AX0 - 26
-AH = int(AW * aff.shape[0] / aff.shape[1])
-lo_v = TH - 0.035
+AH = min(int(AW * aff.shape[0] / aff.shape[1]), 230)  # room for the counts below
+lo_v = min(TH - 0.035, float(np.percentile(aff, 98)))  # show the structure below the threshold too
 norm = np.clip((aff - lo_v) / (1 - lo_v), 0, 1) ** 1.5
 import matplotlib.cm as cm  # noqa: E402
 
@@ -258,8 +287,10 @@ selA_all, selB_all = set(ka_all), set(kb_all)   # selected in some region
 STEP = [("Step (A)  Sequential matching", "regions both robots visited in sequence"),
         ("Step (B)  Balanced min. vertex cover", "fewest keyframes, shared by both robots"),
         ("Step (C)  Max. edge-weighted clique", "only geometrically consistent pairs"),
-        ("Send only these scans", "one region: the most consistent pairs"),
-        ("Maps merged", "registered from the exchanged scans only")]
+        (f"Send only these {UNIT}", "one region: the most consistent pairs" if len(CHS) == 1 else
+         f"{len(CHS)} regions: consistent pairs, spread out"),
+        ("Maps merged", "registered from the exchanged scans only" if not PAIRS else
+         f"rigid fit of {reg.inliers} selected pairs' positions")]
 
 for f in (ONLY or range(TOTAL)):
     img = np.full((H * SS, W * SS, 3), 255.0)
@@ -279,7 +310,12 @@ for f in (ONLY or range(TOTAL)):
         col = 255 - (255 - col) * dim
         col[chosen] = (1 - lit) * col[chosen] + lit * np.array(mix(LIME, MAG, fade), float)
         col[other] = (1 - lit * (1 - fade)) * col[other] + lit * (1 - fade) * np.array(LIME, float)
-        splat(img, uv(w[:, :2]), col, 0.5)
+        q = uv(w[:, :2])
+        if args.point_px > 1:  # thicker points: copies shifted by up to point_px - 1 pixels
+            o = np.array([(i, j) for i in range(args.point_px) for j in range(args.point_px)], float)
+            q = (q[None, :, :] + o[:, None, :]).reshape(-1, 2)
+            col = np.tile(col, (len(o), 1))
+        splat(img, q, col, args.point_alpha)
     pim = Image.fromarray(img.astype(np.uint8))
     d = ImageDraw.Draw(pim)
     # trajectories
@@ -320,7 +356,7 @@ for f in (ONLY or range(TOTAL)):
             x1, y1 = mat_xy(a1, b1)
             x0, x1 = np.clip([x0, x1], AX0 * SS, (AX0 + AW) * SS)
             y0, y1 = np.clip([y0, y1], AY0 * SS, (AY0 + AH) * SS)
-            is_ch = tuple(bx) == tuple(rch.box)
+            is_ch = tuple(bx) in CH_BOXES
             col = mix(CYAN, MAG, fade) if is_ch else tuple(int(c * (1 - 0.6 * fade) + 70 * 0.6 * fade) for c in CYAN)
             d.rectangle([x0, y0, x0 + u * (x1 - x0), y0 + u * (y1 - y0)], outline=col, width=(3 if is_ch and fade > 0 else 2) * SS)
         pts_show = cand if f < STARTS["cover"] + P["cover"] // 2 else cover
@@ -348,7 +384,7 @@ for f in (ONLY or range(TOTAL)):
     rows = [("(A) candidate pairs", len(cand), "regions", (190, 190, 200)),
             ("(B) after vertex cover", len(cover), "cover", CYAN),
             ("(C) after clique", len(pairs), "clique", LIME),
-            ("scans exchanged (1 region)", n_sent, "send", MAG)]
+            (f"{UNIT} exchanged ({len(CHS)} region{'s' if len(CHS) > 1 else ''})", n_sent, "send", MAG)]
     bw = AW - 10
     for i, (label_, n, ph, col) in enumerate(rows):
         if f < STARTS[ph]:
@@ -369,7 +405,7 @@ for f in (ONLY or range(TOTAL)):
             d.text((AX0 * SS, 40 * SS), t2, font=font(12, FR), fill=(100, 100, 100))
     else:
         d.text((AX0 * SS, 16 * SS), args.intro, font=font(17), fill=INK)
-        d.text((AX0 * SS, 40 * SS), "which scans should they exchange?", font=font(12, FR), fill=(100, 100, 100))
+        d.text((AX0 * SS, 40 * SS), f"which {UNIT} should they exchange?", font=font(12, FR), fill=(100, 100, 100))
     # legend + counter on the map
     d.text((18 * SS, 14 * SS), "● " + LAB_A, font=font(13), fill=BLUE)
     xb = 18 * SS + d.textlength("● " + LAB_A, font=font(13)) + 22 * SS
@@ -377,7 +413,8 @@ for f in (ONLY or range(TOTAL)):
     if f >= STARTS["send"]:
         a = ease(phase(f, "send") * 2)
         shown = int(round(a * n_sent))
-        txt = f"{shown} of {n_total:,} scans  ·  {MB_SENT * shown / n_sent:.1f} of {MB_ALL:,.0f} MB"
+        txt = (f"{shown} of {n_total:,} {UNIT}  ·  {MB_SENT * shown / n_sent:.1f} {SIZE_U} of poses" if PAIRS else
+               f"{shown} of {n_total:,} {UNIT}  ·  {MB_SENT * shown / n_sent:.1f} of {MB_ALL:,.0f} {SIZE_U}")
         d.rounded_rectangle([14 * SS, (H - 46) * SS, 360 * SS, (H - 14) * SS], radius=8 * SS, fill=(252, 236, 242))
         d.text((24 * SS, (H - 41) * SS), txt, font=font(14), fill=MAG)
     d.line([MW * SS, 16 * SS, MW * SS, (H - 16) * SS], fill=(228, 228, 228), width=SS)

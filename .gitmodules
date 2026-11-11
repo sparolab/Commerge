@@ -4,3 +4,15 @@
 [submodule "thirdparty/KISS-Matcher"]
 	path = thirdparty/KISS-Matcher
 	url = https://github.com/MIT-SPARK/KISS-Matcher.git
+[submodule "tools/demo/radar/thirdparty/RadLoc"]
+	path = tools/demo/radar/thirdparty/RadLoc
+	url = https://github.com/sparolab/RadLoc.git
+[submodule "tools/demo/sonar/thirdparty/sonar_context"]
+	path = tools/demo/sonar/thirdparty/sonar_context
+	url = https://github.com/sparolab/sonar_context.git
+[submodule "tools/demo/thermal/thirdparty/AnyThermal"]
+	path = tools/demo/thermal/thirdparty/AnyThermal
+	url = https://github.com/castacks/AnyThermal.git
+[submodule "tools/demo/thermal/thirdparty/BridgeMultiSpectralDepth"]
+	path = tools/demo/thermal/thirdparty/BridgeMultiSpectralDepth
+	url = https://github.com/castacks/BridgeMultiSpectralDepth.git

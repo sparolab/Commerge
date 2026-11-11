@@ -1,0 +1,34 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "commerge-cpp"
+version = "2.1.0"
+description = "C++ core of Commerge (IJRR 2026): communication-efficient multi-robot map merging, with Python bindings"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Hogyun Kim" }]
+dependencies = ["numpy"]
+keywords = ["multi-robot", "map merging", "SLAM", "LiDAR", "place recognition", "C++", "pybind11"]
+classifiers = [
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Intended Audience :: Science/Research",
+]
+
+[project.urls]
+Homepage = "https://github.com/sparolab/Commerge"
+
+[tool.scikit-build]
+wheel.packages = ["python/commerge_cpp"]
+cmake.build-type = "Release"
+build-dir = "build/{wheel_tag}"
+
+[tool.scikit-build.cmake.define]
+COMMERGE_BUILD_PYTHON = "ON"
+COMMERGE_BUILD_CLI = "OFF"
+COMMERGE_WITH_REGISTRATION = { env = "COMMERGE_WITH_REGISTRATION", default = "ON" }
+COMMERGE_WITH_GUROBI = { env = "COMMERGE_WITH_GUROBI", default = "ON" }

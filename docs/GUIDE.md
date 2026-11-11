@@ -20,9 +20,9 @@ Everything the [README](../README.md) leaves out: outputs, options, the Python A
 | `--solver` | `auto` | `gurobi`, `highs` or `auto` |
 | `--policy` | `score` | region(s) whose scans are exchanged: `score` (largest step-(C) clique weight), `area`, `candidates` or `all` |
 | `--no-register`, `--reg-voxel` | `0.5` | skip the registration; its voxel size (m) |
-| `--registration` | `kiss` | `kiss`: KISS-Matcher + GICP; `grid` (experimental): yaw and x-y search (+-40 m) around up to 5 exchanged pairs, then ICP, for scans too different for feature matching |
+| `--registration` | `kiss` | `kiss`: KISS-Matcher + GICP on the exchanged scans; `pairs`: rigid fit (yaw + translation) of the selected pairs' keyframe positions, no scans needed, so any sensor works (use it with `--policy all`: pairs spread over every region fix the yaw); `grid` (experimental): yaw and x-y search (+-40 m) around up to 5 exchanged pairs, then ICP, for scans too different for feature matching |
 | `--gt-a`, `--gt-b` | | ground-truth keyframe poses (KITTI, common frame) to report the merge error |
-| `--affinity` | SOLiD | any `(N_A, N_B)` `.npy` instead (another descriptor) |
+| `--affinity` | SOLiD | any `(N_A, N_B)` `.npy` instead (another descriptor, another sensor: [tools/demo](../tools/demo)); higher = more similar |
 | `--enhance` | `0` | experimental: sequence-enhance the affinity over L keyframes before step (A) (row/column z-scores, then the diagonal and anti-diagonal average); the threshold becomes a z-score (about 3) |
 | `--poses` | `auto` | `optimized` (loop-closed) or `odom` keyframe poses |
 | `--min-range`, `--voxel` | `3.0`, `0` | submap: drop points near the sensor, optional voxel size |
@@ -40,7 +40,7 @@ print(sel.regions[region].keyframes_a, sel.regions[region].keyframes_b)
 
 ## Compare: `commerge-compare`
 
-`commerge-compare` runs Commerge, its ablations and AutoMerge (our re-implementation of its SeqSLAM-based region selection, see [`commerge/baselines`](../commerge/baselines)) on the same pair of sessions:
+`commerge-compare` runs Commerge, its ablations and AutoMerge (our re-implementation of its SeqSLAM-based region selection, see [`python/commerge/baselines`](../python/commerge/baselines)) on the same pair of sessions:
 
 ```bash
 commerge-compare $HOME/robot_a $HOME/robot_b --threshold 0.96 --min-area 2000 --out compare/ [--gt-a gt_a.txt --gt-b gt_b.txt]

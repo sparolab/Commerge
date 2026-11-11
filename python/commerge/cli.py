@@ -57,9 +57,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     g.add_argument("--no-register", action="store_true",
                    help="do not register the exchanged submaps (registration needs kiss-matcher, small-gicp)")
     g.add_argument("--reg-voxel", type=float, default=0.5, help="registration voxel size (m)")
-    g.add_argument("--registration", choices=("kiss", "grid"), default="kiss",
-                   help="kiss: KISS-Matcher + GICP (default); grid: yaw and x-y search around the best selected "
-                        "pair + ICP, for heterogeneous LiDARs")
+    g.add_argument("--registration", choices=("kiss", "pairs", "grid"), default="kiss",
+                   help="kiss: KISS-Matcher + GICP on the exchanged scans (default); pairs: fit the selected pairs' "
+                        "keyframe positions (no point clouds: any sensor, any descriptor); grid: yaw and x-y search "
+                        "around the best selected pair + ICP, for heterogeneous LiDARs (experimental)")
     g.add_argument("--gt-a", type=Path, help="ground-truth keyframe poses of A (KITTI, common frame): report the error")
     g.add_argument("--gt-b", type=Path, help="ground-truth keyframe poses of B (same frame as --gt-a)")
     g = p.add_argument_group("output")
@@ -127,9 +128,12 @@ def main(argv=None) -> int:
     kb = sorted({b for k in chosen for b in sel.regions[k].keyframes_b})
     summary["exchange"] = {"policy": args.policy, "regions": chosen, "keyframes_a": ka, "keyframes_b": kb}
     if ka and kb and not (args.no_submaps and args.no_register):
-        sub_a = build_submap(A, ka, args.min_range, args.voxel)
-        sub_b = build_submap(B, kb, args.min_range, args.voxel)
-        if not args.no_submaps:
+        scans = bool(A.scans and B.scans)
+        if not scans and args.registration != "pairs":
+            raise SystemExit("no Scans/ in the sessions: use --registration pairs (or --no-register)")
+        sub_a = build_submap(A, ka, args.min_range, args.voxel) if scans else None
+        sub_b = build_submap(B, kb, args.min_range, args.voxel) if scans else None
+        if scans and not args.no_submaps:
             save_submap(out / "submap_A.pcd", sub_a)
             save_submap(out / "submap_B.pcd", sub_b)
         if not args.no_register:
@@ -149,9 +153,10 @@ def main(argv=None) -> int:
                 merged = np.einsum("ij,njk->nik", reg.T_a_b, B.poses)[:, :3, :4].reshape(len(B), 12)
                 np.savetxt(out / "poses_b_in_a.txt", merged, fmt="%.9f")
                 summary["registration"] = {"inliers": reg.inliers, "gicp_error": reg.fitness, "seconds": reg.seconds}
-                msg = (f"[commerge] registered B to A: {reg.inliers} KISS-Matcher inliers, GICP in {reg.seconds:.1f} s"
-                       if args.registration == "kiss" else
-                       f"[commerge] registered B to A (grid + ICP): fit {reg.fitness:.2f} in {reg.seconds:.1f} s")
+                msg = {"kiss": f"[commerge] registered B to A: {reg.inliers} KISS-Matcher inliers, GICP in {reg.seconds:.1f} s",
+                       "pairs": f"[commerge] registered B to A from {reg.inliers} selected pairs: RMS {reg.fitness:.2f} m",
+                       "grid": f"[commerge] registered B to A (grid + ICP): fit {reg.fitness:.2f} in {reg.seconds:.1f} s",
+                       }[args.registration]
                 if args.gt_a and args.gt_b:
                     et, er, em = alignment_error(reg.T_a_b, A.poses, B.poses, read_kitti_poses(args.gt_a),
                                                  read_kitti_poses(args.gt_b))
@@ -167,10 +172,15 @@ def main(argv=None) -> int:
 
     total = len(A) + len(B)
     sent = len(ka) + len(kb)
-    mb = sum(A.scans[k].stat().st_size for k in ka) / 1e6 + sum(B.scans[k].stat().st_size for k in kb) / 1e6 \
-        if A.scans and B.scans else float("nan")
-    print(f"[commerge] exchanged {len(ka)} A + {len(kb)} B scans ({100.0 * sent / max(total, 1):.1f} % of {total}, "
-          f"{mb:.1f} MB) from region(s) {chosen} of {len(sel.regions)} -> {out}")
+    if args.registration == "pairs" and not args.no_register:  # only the selected keyframes' poses travel
+        size, unit = f"{sent * 12 * 8 / 1e3:.1f} KB of poses", "keyframes"
+    elif A.scans and B.scans:
+        mb = sum(A.scans[k].stat().st_size for k in ka) / 1e6 + sum(B.scans[k].stat().st_size for k in kb) / 1e6
+        size, unit = f"{mb:.1f} MB", "scans"
+    else:
+        size, unit = "no Scans/", "keyframes"
+    print(f"[commerge] exchanged {len(ka)} A + {len(kb)} B {unit} ({100.0 * sent / max(total, 1):.1f} % of {total}, "
+          f"{size}) from region(s) {chosen} of {len(sel.regions)} -> {out}")
     return 0
 
 

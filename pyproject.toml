@@ -42,6 +42,7 @@ Paper = "https://arxiv.org/abs/2606.25386"
 Issues = "https://github.com/sparolab/Commerge/issues"
 
 [tool.setuptools]
+package-dir = { "" = "python" }
 packages = ["commerge", "commerge.baselines"]
 
 [tool.setuptools.dynamic]

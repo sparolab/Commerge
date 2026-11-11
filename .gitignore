@@ -5,3 +5,4 @@ dist/
 *.npy
 /merged/
 /compare/
+/runs/

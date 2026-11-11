@@ -6,6 +6,7 @@
   <br />
   <a href="https://github.com/sparolab/Commerge/tree/main/commerge"><img src="https://img.shields.io/badge/Python-3670A0?logo=python&logoColor=ffdd54" /></a>
   <a href="https://pypi.org/project/commerge/"><img src="https://img.shields.io/pypi/v/commerge?logo=pypi&logoColor=white&label=PyPI" /></a>
+  <a href="#c"><img src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white" /></a>
   <a href="#prerequisites"><img src="https://img.shields.io/badge/Gurobi-EE3524" /></a>
   <a href="#prerequisites"><img src="https://img.shields.io/badge/HiGHS-license--free-2E7D32" /></a>
   <a href="https://github.com/sparolab/SOLiD"><img src="https://img.shields.io/badge/SOLiD-descriptor-3F51B5" /></a>
@@ -60,7 +61,26 @@ git clone --recursive https://github.com/sparolab/Commerge.git && cd Commerge &&
 commerge --version
 ```
 
-Ubuntu and macOS (Python only, no ROS needed for Commerge itself).
+Ubuntu and macOS (no ROS needed for Commerge itself).
+
+### C++
+
+The same pipeline in C++17 ([cpp/](https://github.com/sparolab/Commerge/tree/main/cpp)): a library (`commerge::commerge`), the `commerge_cpp` command with the same options and outputs (except `--plot`), and Python bindings. HiGHS is built in; Gurobi and the registration (KISS-Matcher + small_gicp) are used when found.
+
+```bash
+sudo apt install libeigen3-dev libflann-dev liblz4-dev    # macOS: brew install eigen flann lz4 libomp
+cmake -S cpp -B cpp/build && cmake --build cpp/build -j    # from the clone (submodules: KISS-Matcher)
+cpp/build/commerge_cpp $HOME/robot_a $HOME/robot_b --threshold 0.96 --min-area 2000 --out merged/
+pip install commerge-cpp                                  # bindings (selection, HiGHS); from the clone: pip install ./cpp
+```
+
+```python
+import commerge_cpp as cc
+sel = cc.select(affinity, pos_a, pos_b, threshold=0.96, min_area=2000)   # same selection as commerge.select
+sel.keyframes_a, sel.keyframes_b, sel.pairs
+```
+
+On KITTI 00 the C++ command selects the same pairs as the Python package (Gurobi and HiGHS), the same 14 A + 17 B scans, and merges within the same 0.35 m, 0.06°.
 
 ### Docker
 
@@ -114,6 +134,50 @@ Clone https://github.com/sparolab/Commerge, read its AGENTS.md, and follow it to
 ```
 
 The agent follows [`AGENTS.md`](https://github.com/sparolab/Commerge/blob/main/AGENTS.md): it installs Commerge with Gurobi or HiGHS, makes one SOLiD session per robot, selects and exchanges the scans, merges the maps, and checks the result.
+
+______________________________________________________________________
+
+## :bulb: Tips: any sensor, any descriptor
+
+Commerge never looks at the sensor. It needs, per robot, keyframe poses and one place descriptor per keyframe; the two robots' descriptors give an affinity (`--affinity`, any `(N_A, N_B)` `.npy`, higher = more similar), and steps (A), (B), (C) run on it unchanged. Without point clouds, `--registration pairs` merges the maps from the selected pairs alone: they are the same places, so B's keyframe positions are fitted onto A's (yaw and translation). So if your sensor has a place-recognition descriptor, Commerge merges its maps: **thermal** across day and night, **radar** through rain and fog, **sonar** under water, a **camera**...
+
+```python
+import numpy as np
+desc_a, desc_b = ..., ...                      # one descriptor per keyframe, any place-recognition method
+np.save("affinity.npy", desc_a @ desc_b.T)     # cosine similarity for normalized vectors; or 1 - distance / max
+```
+
+```bash
+commerge robot_a robot_b --affinity affinity.npy --threshold T --min-area N --registration pairs --policy all \
+    --out merged/                              # robot_*: odom_poses.txt (KITTI format), one row per keyframe
+```
+
+Pick `--threshold` around the top 0.1 % of the affinity and `--min-area` from the keyframe spacing (a few tens of keyframes in sequence). `--policy all` hands the pairs of every region to the fit, which pins down the rotation. Each demo below splits real data into two robots, moves robot B into its own frame (**yaw 60°, (30, −20, 0) m**) and lets Commerge find it back; every map is drawn from that sensor's own points (radar detections, sonar returns, stereo or thermal depth), no LiDAR:
+
+| Sensor | Descriptor | Data | Keyframes exchanged | Rotation error | B's keyframes off | Demo |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| 4D radar | [SOLiD](https://github.com/sparolab/SOLiD) | SNAIL-Radar, two days | 1.7 % | 0.33° | 0.57 m | [tools/demo/4dradar](tools/demo/4dradar) |
+| Radar (Navtech) | [RadLoc](https://github.com/sparolab/RadLoc) | MulRan KAIST_03 | 1.2 % | 0.05° | 0.45 m | [tools/demo/radar](tools/demo/radar) |
+| Imaging sonar | [Sonar Context](https://github.com/sparolab/sonar_context) | Aracati 2017 | 4.5 % | 3.0° | 1.33 m | [tools/demo/sonar](tools/demo/sonar) |
+| Thermal camera | [AnyThermal](https://github.com/castacks/AnyThermal) | ViViD++ campus, day vs night | 2.1 % | 0.16° | 1.09 m | [tools/demo/thermal](tools/demo/thermal) |
+| Camera | [MegaLoc](https://github.com/gmberton/MegaLoc) | KITTI 00 | 2.1 % | 0.22° | 1.90 m | [tools/demo/camera](tools/demo/camera) |
+
+<table>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/4dradar.gif" alt="4D radar demo" /></td>
+    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/radar.gif" alt="Radar demo" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/sonar.gif" alt="Sonar demo" /></td>
+    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/thermal.gif" alt="Thermal demo" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/sparolab/Commerge/main/assets/demos/camera.gif" alt="Camera demo" /></td>
+    <td></td>
+  </tr>
+</table>
+
+Exchanged keyframes are the share of both robots' keyframes; with `--registration pairs` only their poses travel (a few KB). The rotation and position errors are against each dataset's ground truth.
 
 ______________________________________________________________________
 

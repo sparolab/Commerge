@@ -24,7 +24,7 @@ git clone --recursive https://github.com/sparolab/Commerge.git    # thirdparty/:
 cd Commerge
 ```
 
-Layout: `commerge/` is the Python package (`selection.py`: step (A) sequential matching, step (B) balanced minimum vertex cover, step (C) maximum edge-weighted clique; `solvers.py`: Gurobi / HiGHS; `merge.py`: exchange policy, KISS-Matcher + GICP registration, error; `cli.py`: the `commerge` command; `compare.py`: `commerge-compare`; `baselines/automerge.py`). `docs/GUIDE.md` lists every output and option. `thirdparty/SOLiD` makes the per-robot sessions.
+Layout: `python/commerge/` is the Python package (`selection.py`: step (A) sequential matching, step (B) balanced minimum vertex cover, step (C) maximum edge-weighted clique; `solvers.py`: Gurobi / HiGHS; `merge.py`: exchange policy, KISS-Matcher + GICP registration, error; `cli.py`: the `commerge` command; `compare.py`: `commerge-compare`; `baselines/automerge.py`). `cpp/` is the same pipeline in C++ (library, `commerge_cpp` command, `commerge_cpp` Python bindings). `docs/GUIDE.md` lists every output and option. `thirdparty/SOLiD` makes the per-robot sessions.
 
 ## 3. Install
 
