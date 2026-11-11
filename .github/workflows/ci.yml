@@ -44,7 +44,9 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libeigen3-dev libflann-dev liblz4-dev libomp-dev
       - if: runner.os == 'macOS'
-        run: brew install eigen flann lz4 libomp
+        run: |
+          brew install eigen flann lz4 libomp
+          echo "OpenMP_ROOT=$(brew --prefix libomp)" >> $GITHUB_ENV   # Apple Clang: Homebrew's libomp
       - name: Library and command (HiGHS, KISS-Matcher + small_gicp)
         run: |
           cmake -S cpp -B cpp/build -DCMAKE_BUILD_TYPE=Release

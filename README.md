@@ -68,7 +68,7 @@ Ubuntu and macOS (no ROS needed for Commerge itself).
 The same pipeline in C++17 ([cpp/](https://github.com/sparolab/Commerge/tree/main/cpp)): a library (`commerge::commerge`), the `commerge_cpp` command with the same options and outputs (except `--plot`), and Python bindings. HiGHS is built in; Gurobi and the registration (KISS-Matcher + small_gicp) are used when found.
 
 ```bash
-sudo apt install libeigen3-dev libflann-dev liblz4-dev    # macOS: brew install eigen flann lz4 libomp
+sudo apt install libeigen3-dev libflann-dev liblz4-dev    # macOS: brew install eigen flann lz4 libomp; export OpenMP_ROOT=$(brew --prefix libomp)
 cmake -S cpp -B cpp/build && cmake --build cpp/build -j    # from the clone (submodules: KISS-Matcher)
 cpp/build/commerge_cpp $HOME/robot_a $HOME/robot_b --threshold 0.96 --min-area 2000 --out merged/
 pip install commerge-cpp                                  # bindings (selection, HiGHS); from the clone: pip install ./cpp
